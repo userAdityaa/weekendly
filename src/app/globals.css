@@ -35,3 +35,8 @@ body {
   animation: swing 2.5s ease-in-out infinite;
   transform-origin: top center;
 }
+
+.leaflet-container {
+  border-radius: 0.5rem; /* Matches rounded-lg */
+  border: 1px solid #e5e7eb; /* Optional: subtle border */
+}
