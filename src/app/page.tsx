@@ -1,9 +1,11 @@
 import Image from "next/image";
+import Navbar from "../../components/Navbar";
 
 export default function Home() {
   return (
     <div className="relative min-h-screen">
       {/* Background image */}
+      <Navbar />
       <Image
         src="/background_image.png"
         alt="Background"
