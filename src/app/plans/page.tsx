@@ -1,13 +1,14 @@
-'use client';
+"use client";
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Loader from '../../../components/Loader';
+import { useRouter } from 'next/navigation'; 
 
-const WorldMap = dynamic(() => import ('../../../components/WorldMap'), {
+const WorldMap = dynamic(() => import('../../../components/WorldMap'), {
   ssr: false,
-})
+});
 
-// Define types for friends and past plans
 interface Friend {
   name: string;
   status: string;
@@ -20,7 +21,6 @@ interface PastPlan {
   people: string;
 }
 
-// Helper function to determine avatar based on name
 const getAvatar = (name: string): string => {
   const femaleNames = ['Stephanie', 'Maryin Kay'];
   return femaleNames.includes(name) ? '/female_user_one.png' : '/male_user_one.png';
@@ -30,13 +30,14 @@ export default function Plans() {
   const [accountName, setAccountName] = useState<string>('Aditya');
   const [friends, setFriends] = useState<Friend[]>([]);
   const [pastPlans, setPastPlans] = useState<PastPlan[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const router = useRouter(); 
 
   useEffect(() => {
-    // Load accountName
     const name = localStorage.getItem('accountName') || 'Aditya';
     setAccountName(name);
 
-    // Load friends
     const storedFriends = localStorage.getItem('friends');
     if (storedFriends) {
       setFriends(JSON.parse(storedFriends));
@@ -49,7 +50,6 @@ export default function Plans() {
       ]);
     }
 
-    // Load pastPlans
     const storedPastPlans = localStorage.getItem('pastPlans');
     if (storedPastPlans) {
       setPastPlans(JSON.parse(storedPastPlans));
@@ -62,8 +62,21 @@ export default function Plans() {
     }
   }, []);
 
+  const handleNewPlanClick = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      router.push("/new-plan"); 
+    }, 3000);
+  };
+
+  if (loading) {
+    return <Loader />; 
+  }
+
   return (
     <div className="flex min-h-screen w-full m-0 p-0 bg-[#d6ffd6ee]">
+      {/* Sidebar */}
       <div className="w-16 h-screen bg-[#8be77d86] fixed left-0 top-0">
         <Image 
           src="/only_logo.png"
@@ -73,7 +86,10 @@ export default function Plans() {
           height={55}
         />
       </div>
+
+      {/* Main Content */}
       <div className="ml-16 min-h-screen p-4 w-[70.5%]">
+        {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <div>
             <p className="text-xl font-semibold text-gray-800">
@@ -89,6 +105,8 @@ export default function Plans() {
             className="rounded-xl bg-white px-4 py-2 text-gray-600 focus:outline-none w-[25rem]"
           />
         </div>
+
+        {/* Map + Friends */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="col-span-2 bg-white rounded-lg p-4 h-[27rem] shadow-md overflow-hidden">
             <h2 className="text-lg font-semibold mb-2 text-black">Most Visited Place</h2>
@@ -96,6 +114,7 @@ export default function Plans() {
               <WorldMap />
             </div>
           </div>
+
           <div className="bg-white rounded-lg p-4 h-[22rem] shadow-md">
             <div className="flex flex-col justify-start items-start mb-4">
               <h2 className="text-lg font-semibold text-black">Friendlist</h2>
@@ -123,6 +142,8 @@ export default function Plans() {
             </ul>
           </div>
         </div>
+
+        {/* Past Plans + Create New */}
         <div className="grid grid-cols-3 gap-2 h-[30%] absolute bottom-25">
           <div className="col-span-2 bg-gradient-to-br from-white to-gray-50 rounded-lg p-4 shadow-md overflow-y-auto w-[96%] h-[74%]">
             <div className="flex justify-between items-center mb-4 text-black">
@@ -157,7 +178,12 @@ export default function Plans() {
               ))}
             </ul>
           </div>
-          <div className="rounded-lg flex flex-col justify-center items-center text-black relative h-[30rem] w-[21rem] -top-25 -left-8">
+
+          {/* ✅ Create New Plan card */}
+          <div 
+            onClick={handleNewPlanClick}
+            className="cursor-pointer rounded-lg flex flex-col justify-center items-center text-black relative h-[30rem] w-[21rem] -top-25 -left-8"
+          >
             <Image
               src="/crate_new.png"
               alt="Create New Plan"
@@ -174,6 +200,8 @@ export default function Plans() {
           </div>
         </div>
       </div>
+
+      {/* Right Sidebar */}
       <div>
         <Image
           src="/plans_sideimage.png"
@@ -199,18 +227,18 @@ export default function Plans() {
             <h1 className="text-2xl font-bold text-white text-center">Christian Pulisic</h1>
             <p className="text-lg text-white text-center">Mountain Climber</p>
             <div className="flex space-x-4 mt-4 w-[100%] h-[5rem]">
-              <div className="bg-white bg-opacity-50 rounded-lg p-2  w-[50%] flex items-center text-black gap-2">
+              <div className="bg-white bg-opacity-50 rounded-lg p-2 w-[50%] flex items-center text-black gap-2">
                 <Image src="/trips_tken.png" alt="Travel icon" width={50} height={50} />
                 <div className='flex flex-col items-center'>
-                <p className="text-sm text-black font-semibold">Fav. Hobby</p>
-                <p className="text-md font-semibold">Climbing</p>
+                  <p className="text-sm text-black font-semibold">Fav. Hobby</p>
+                  <p className="text-md font-semibold">Climbing</p>
                 </div>
               </div>
-              <div className="bg-white bg-opacity-50 rounded-lg p-3  w-[50%] flex items-center text-black gap-2">
+              <div className="bg-white bg-opacity-50 rounded-lg p-3 w-[50%] flex items-center text-black gap-2">
                 <Image src="/trip.png" alt="Travel icon" width={50} height={50} />
                 <div className='flex flex-col items-center'>
-                <p className="text-sm text-black font-semibold">Trips Taken</p>
-                <p className="text-md font-semibold">5</p>
+                  <p className="text-sm text-black font-semibold">Trips Taken</p>
+                  <p className="text-md font-semibold">5</p>
                 </div>
               </div>
             </div>
