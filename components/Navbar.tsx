@@ -1,50 +1,89 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 import Image from 'next/image';
-import { workSans } from '@/app/layout';
-import { tags } from '../constants/Tag';
+import { Menu, X } from 'lucide-react';
+import { Work_Sans } from 'next/font/google';
 
-export default function Navbar() { 
+export const workSans = Work_Sans({
+  subsets: ["latin"]
+});
+
+export default function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <div className="relative">
+    <div className="relative z-[100]">
       {/* Navbar */}
-      <div className="bg-[#fefefeee] p-4 rounded-xl flex items-center justify-between fixed top-5 left-1/2 w-[98%] transform -translate-x-1/2 z-10 px-8 border border-black">
+      <div className="bg-[#fefefeee] p-4 rounded-xl flex items-center justify-between fixed top-5 left-1/2 w-[98%] transform -translate-x-1/2 z-10 px-8 border border-black max-md:left-[50%] max-md:top-[2%]">
+        {/* Logo */}
         <div className="flex items-center">
-          <Image src='/logo.png' alt="weekendly logo" width={200} height={200} className="mr-2" />
-        </div>
-        <div className={`flex space-x-6 ${workSans.className} text-[1.3rem] -ml-[8rem] font-semibold`}>
-          <a href="#" className="text-gray-800 hover:text-green-700">Planner</a>
-          <a href="#" className="text-gray-800 hover:text-green-700">Themes</a>
-          <a href="#" className="text-gray-800 hover:text-green-700">My Plans</a>
-        </div>
-
-        {/* Login Button Image */}
-        <div className="cursor-pointer bg-white rounded-lg  hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-200 p-1">
-          <Image 
-            src="/login_button.png" 
-            alt="Login" 
-            width={145} 
-            height={145} 
+          <Image
+            src="/logo.png"
+            alt="weekendly logo"
+            width={200}
+            height={200}
+            className="mr-2 max-md:w-[50vw] max-md:-ml-5"
           />
         </div>
+
+        {/* Desktop Nav Links */}
+        <div
+          className={`flex space-x-6 ${workSans.className} text-[1.3rem] -ml-[8rem] font-semibold max-md:hidden`}
+        >
+          <a href="#" className="text-gray-800 hover:text-green-700">
+            Planner
+          </a>
+          <a href="#" className="text-gray-800 hover:text-green-700">
+            Themes
+          </a>
+          <a href="#" className="text-gray-800 hover:text-green-700">
+            My Plans
+          </a>
+        </div>
+
+        {/* Desktop Login Text */}
+        <div className="cursor-pointer text-gray-800 font-semibold max-md:hidden">
+          Login
+        </div>
+
+        {/* Mobile Hamburger */}
+        <button
+          className="hidden max-md:block p-2 -mr-4"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          {menuOpen ? <X size={32} className='text-zinc-400' /> : <Menu size={32} className='text-zinc-400'/>}
+        </button>
       </div>
 
-      {/* Hanging Tags */}
-      <div className="fixed top-[6.5rem] left-1/2 transform -translate-x-1/2 flex space-x-20 z-10">
-        {tags.map((tag, index) => (
-          <div key={index} className="relative flex flex-col items-center hover:animate-swing">
-            {/* Circle at the start of the string */}
-            <div className="w-3 h-3 rounded-full bg-black"></div>
-            {/* String */}
-            <div className="w-[2px] h-8 bg-black"></div>
-            {/* Tag */}
-            <div
-              className={`${tag.color} min-w-[10rem] px-6 py-2 rounded-2xl border border-black font-semibold text-black text-center cursor-pointer`}
-            >
-              {tag.name}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Mobile Menu Dropdown */}
+      {menuOpen && (
+        <div className="fixed top-[6rem] right-4 transform  w-[115px] bg-[#fefefe] border border-black shadow-lg z-20 flex flex-col items-center justify-start space-y-4 py-4 rounded-lg max-md:flex px-4">
+          <a
+            href="#"
+            className={`text-gray-800 hover:text-green-700 ${workSans.className} font-semibold text-lg w-full text-center`}
+          >
+            Planner
+          </a>
+          <a
+            href="#"
+            className={`text-gray-800 hover:text-green-700 ${workSans.className} font-semibold text-lg w-full text-center`}
+          >
+            Themes
+          </a>
+          <a
+            href="#"
+            className={`text-gray-800 hover:text-green-700 ${workSans.className} font-semibold text-lg w-full text-center`}
+          >
+            My Plans
+          </a>
+          <a
+            href="#"
+            className={`text-gray-800 hover:text-green-700 ${workSans.className} font-semibold text-lg w-full text-center`}
+          >
+            Login
+          </a>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import Navbar from "../../components/Navbar";
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen overflow-hidden">
       {/* Background image */}
       <Navbar />
       <Image
@@ -16,7 +16,7 @@ export default function Home() {
       />
 
       {/* Card container with text overlay and analytics image */}
-      <div className="relative z-10 top-45 left-45 w-[1000px] flex items-start gap-4">
+      <div className="relative z-10 top-45 left-45 w-[1000px] max-md:w-[100%] flex items-start gap-4 max-md:flex-col max-md:top-20 max-md:left-0">
         <div className="relative">
           <Image
             src="/landing_page_card.png"
@@ -25,11 +25,11 @@ export default function Home() {
             height={300}
             priority
             quality={70}
-            className="w-full h-full object-contain"
+            className="mx-auto object-contain max-md:max-w-[100vw]"
           />
 
           {/* Text + Button overlay */}
-          <div className="absolute inset-0 flex flex-col items-start justify-start px-4 mt-[6rem] top-56">
+          <div className="absolute inset-0 flex flex-col items-start justify-start px-4 mt-[6rem] top-56 max-md:mt-[25%]">
             <p className="ml-[2rem] text-black text-xl font-semibold w-[80%] text-left mt-[1rem]">
               Playful planning for perfect weekends — craft your own mix of activities, moods, and meals, and turn two days into unforgettable memories.
             </p>
@@ -59,7 +59,7 @@ export default function Home() {
           height={150}
           priority
           quality={70}
-          className="object-contain mt-[1rem] ml-[2.5rem]"
+          className="object-contain mt-[1rem] ml-[2.5rem] max-md:ml-[0.4rem] max-md:-mt-[1rem] max-md:w-[95vw]"
         />
       </div>
     </div>
