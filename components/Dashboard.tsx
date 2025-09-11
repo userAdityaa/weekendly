@@ -16,6 +16,7 @@ import {
 import { SortableItem } from './SortableItem';
 import Image from 'next/image';
 import PlanWizard from './PlanWizard';
+import { DragEndEvent } from '@dnd-kit/core';
 
 interface Plan {
   id: string;
@@ -113,10 +114,10 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
   const [showHooray, setShowHooray] = useState(false);
 
   const iconMap: Record<string, JSX.Element> = {
-    hike: <Mountain className="w-4 h-4 text-green-500" />,
-    brunch: <Coffee className="w-4 h-4 text-yellow-500" />,
-    movie: <Film className="w-4 h-4 text-purple-500" />,
-    default: <Clock className="w-4 h-4 text-blue-500" />,
+    hike: <Mountain className="w-5 h-5" />,
+    brunch: <Coffee className="w-5 h-5" />,
+    movie: <Film className="w-5 h-5" />,
+    default: <Clock className="w-5 h-5" />,
   };
 
   const userName =
@@ -126,7 +127,7 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
 
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -139,20 +140,6 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
 
   const addPlan = () => {
     setShowPlanWizard(true);
-  };
-
-  const getRandomPastelColor = () => {
-    const colors = [
-      'rgba(173, 216, 230, 0.3)',
-      'rgba(144, 238, 144, 0.3)',
-      'rgba(255, 182, 193, 0.3)',
-      'rgba(255, 223, 186, 0.3)',
-      'rgba(221, 160, 221, 0.3)',
-      'rgba(152, 251, 152, 0.3)',
-      'rgba(255, 245, 157, 0.3)',
-      'rgba(175, 238, 238, 0.3)',
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
   };
 
   const formatTime = (time: string): string => {
@@ -206,7 +193,7 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
       const newMood: Mood = {
         id: crypto.randomUUID(),
         name: newMoodName.trim(),
-        color: getRandomPastelColor(),
+        color: 'rgba(173, 216, 230, 0.3)', // fixed light blue
       };
       setMoods([...moods, newMood]);
       setNewMoodName('');
@@ -234,7 +221,6 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
         setShowHooray(true);
         setTimeout(() => {
           setShowHooray(false);
-          // Flip matched cards back by removing them from matchedPairs
           setMatchedPairs((prev) => prev.filter((id) => id !== firstId && id !== secondId));
         }, 2000);
       }
@@ -242,12 +228,11 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
       const newAttempts = attempts - 1;
       setAttempts(newAttempts);
 
-      // Reset attempts and flipped cards when attempts reach 0
       setTimeout(() => {
         setFlippedCards([]);
         if (newAttempts === 0) {
           setAttempts(2);
-          setMatchedPairs([]); // Reset all matches to start fresh
+          setMatchedPairs([]);
         }
       }, 1000);
     }
@@ -339,43 +324,28 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
       {/* Plans Section */}
       {plans.length === 0 ? (
         <p className="text-gray-400 text-center">
-          You don't have any plans yet. Click the plus button to add one!
+          You don&apos;t have any plans yet. Click the plus button to add one!
         </p>
       ) : layout === 'horizontal' ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={plans.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-            <div className="relative border-l-2 border-zinc-400 pl-8">
+            <div className="relative space-y-3">
               {plans.map((plan) => (
                 <SortableItem key={plan.id} id={plan.id}>
-                  <div className="relative mb-2">
-                    <span className="absolute -left-12 top-4 flex items-center justify-center w-8 h-8 rounded-full bg-white shadow border border-gray-300">
+                  <div className="flex items-center gap-3 bg-green-100 rounded-xl p-4 shadow-sm">
+                    {/* Left Icon */}
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500 text-white -mt-[2.2rem]">
                       {iconMap[plan.icon] || iconMap['default']}
-                    </span>
-                    <div
-                      className="rounded-lg shadow-md p-4 flex gap-4 items-start border border-gray-200/50 backdrop-blur-md"
-                      style={{
-                        backgroundColor: getRandomPastelColor(),
-                        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                      }}
-                    >
-                      <Image
-                        src="/plan.jpg"
-                        alt="planning placeholder"
-                        width={140}
-                        height={120}
-                        className="rounded-md object-cover"
-                      />
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold">{plan.title}</h3>
-                        <p className="text-sm text-gray-700 flex items-center mt-1">
-                          <Clock className="w-4 h-4 mr-1" /> {plan.time}
-                        </p>
-                        <p className="text-sm text-gray-700 flex items-center mt-1">
-                          <MapPin className="w-4 h-4 mr-1" /> {plan.location}
-                        </p>
-                        {plan.note && <p className="text-sm text-gray-600 italic mt-2">{plan.note}</p>}
-                      </div>
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1">
+                      <h3 className="text-md font-semibold text-gray-900">{plan.title}</h3>
+                      <p className="text-sm text-gray-800">{plan.time}</p>
+                      <p className="text-sm text-gray-800">{plan.location}</p>
+                      {plan.note && (
+                        <p className="text-xs text-gray-700 mt-1">{plan.note}</p>
+                      )}
                     </div>
                   </div>
                 </SortableItem>
@@ -390,7 +360,7 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
               key={plan.id}
               className="rounded-lg shadow-md p-4 border border-gray-200/50 backdrop-blur-md flex flex-col cursor-pointer w-full max-w-xs mx-auto"
               style={{
-                backgroundColor: getRandomPastelColor(),
+                backgroundColor: 'rgba(173, 216, 230, 0.3)',
                 boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
               }}
