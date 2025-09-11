@@ -1,6 +1,6 @@
-'use client'
+'use client';
 import { JSX, useState } from 'react';
-import { Plus, Clock, MapPin, Film, Coffee, Mountain } from 'lucide-react';
+import { Plus, Clock, MapPin, Film, Coffee, Mountain, X } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -24,6 +24,21 @@ interface Plan {
   time: string;
   note?: string;
   icon: string;
+  emoji: string;
+}
+
+interface PlanFormData {
+  title: string;
+  time: string;
+  note: string;
+  friends: { name: string; gender: 'male' | 'female' }[];
+  location: string;
+}
+
+interface Mood {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical' }) {
@@ -35,6 +50,7 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
       time: '9:00 AM – 12:00 PM',
       note: 'Bring water and snacks',
       icon: 'hike',
+      emoji: '🌄',
     },
     {
       id: '2',
@@ -43,6 +59,7 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
       time: '12:30 PM – 2:00 PM',
       note: 'Try their avocado toast',
       icon: 'brunch',
+      emoji: '🥐',
     },
     {
       id: '3',
@@ -51,8 +68,49 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
       time: '7:00 PM – 9:30 PM',
       note: 'Book tickets in advance',
       icon: 'movie',
+      emoji: '🎬',
+    },
+    {
+      id: '4',
+      title: 'Evening Walk',
+      location: 'City Park',
+      time: '6:00 PM – 7:00 PM',
+      note: 'Enjoy the sunset',
+      icon: 'hike',
+      emoji: '🌄',
+    },
+    {
+      id: '5',
+      title: 'Coffee Meetup',
+      location: 'Bean House',
+      time: '3:00 PM – 4:00 PM',
+      note: 'Try the latte',
+      icon: 'brunch',
+      emoji: '🥐',
+    },
+    {
+      id: '6',
+      title: 'Movie Night',
+      location: 'Home Theater',
+      time: '8:00 PM – 10:30 PM',
+      note: 'Popcorn ready',
+      icon: 'movie',
+      emoji: '🎬',
     },
   ]);
+
+  const [moods, setMoods] = useState<Mood[]>([
+    { id: '1', name: 'Calm', color: 'rgba(173, 216, 230, 0.3)' },
+    { id: '2', name: 'Productive', color: 'rgba(144, 238, 144, 0.3)' },
+  ]);
+
+  const [isAddingMood, setIsAddingMood] = useState(false);
+  const [newMoodName, setNewMoodName] = useState('');
+  const [showPlanWizard, setShowPlanWizard] = useState(false);
+  const [flippedCards, setFlippedCards] = useState<string[]>([]);
+  const [matchedPairs, setMatchedPairs] = useState<string[]>([]);
+  const [attempts, setAttempts] = useState(2);
+  const [showHooray, setShowHooray] = useState(false);
 
   const iconMap: Record<string, JSX.Element> = {
     hike: <Mountain className="w-4 h-4 text-green-500" />,
@@ -60,8 +118,6 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
     movie: <Film className="w-4 h-4 text-purple-500" />,
     default: <Clock className="w-4 h-4 text-blue-500" />,
   };
-
-  const [showPlanWizard, setShowPlanWizard] = useState(false);
 
   const userName =
     typeof window !== 'undefined'
@@ -85,37 +141,176 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
     setShowPlanWizard(true);
   };
 
-  // Function to generate random pastel color
   const getRandomPastelColor = () => {
-    const hue = Math.floor(Math.random() * 360);
-    const saturation = Math.floor(Math.random() * 20) + 30;
-    const lightness = Math.floor(Math.random() * 20) + 70;
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    const colors = [
+      'rgba(173, 216, 230, 0.3)',
+      'rgba(144, 238, 144, 0.3)',
+      'rgba(255, 182, 193, 0.3)',
+      'rgba(255, 223, 186, 0.3)',
+      'rgba(221, 160, 221, 0.3)',
+      'rgba(152, 251, 152, 0.3)',
+      'rgba(255, 245, 157, 0.3)',
+      'rgba(175, 238, 238, 0.3)',
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
   };
 
-  const onComplete = () => { 
+  const formatTime = (time: string): string => {
+    if (!time) return 'TBD';
+    try {
+      const [hours, minutes] = time.split(':').map(Number);
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const formattedHours = hours % 12 || 12;
+      const endHours = (hours + 2) % 24;
+      const endPeriod = endHours >= 12 ? 'PM' : 'AM';
+      const formattedEndHours = endHours % 12 || 12;
+      return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${period} – ${formattedEndHours}:${minutes.toString().padStart(2, '0')} ${endPeriod}`;
+    } catch (error) {
+      return 'TBD';
+    }
+  };
+
+  const onComplete = (formData: PlanFormData) => {
+    const newId = crypto.randomUUID();
+    const activityIcons: Record<string, string> = {
+      Movie: 'movie',
+      Hiking: 'hike',
+      Brunch: 'brunch',
+      'Road Trip': 'default',
+      Coffee: 'brunch',
+      Crafting: 'default',
+      Sports: 'default',
+    };
+    const icon = activityIcons[formData.title] || 'default';
+    const emojiOptions = ['🌄', '🥐', '🎬'];
+    const randomEmoji = emojiOptions[Math.floor(Math.random() * emojiOptions.length)];
+    const friendsNote = formData.friends.length
+      ? `Invited: ${formData.friends.map((f) => f.name).join(', ')}. `
+      : '';
+    const finalNote = friendsNote + (formData.note || '');
+    const newPlan: Plan = {
+      id: newId,
+      title: formData.title,
+      location: formData.location || 'TBD',
+      time: formatTime(formData.time),
+      note: finalNote.trim() || undefined,
+      icon,
+      emoji: randomEmoji,
+    };
+    setPlans((prevPlans) => [...prevPlans, newPlan]);
     setShowPlanWizard(false);
-  }
+  };
+
+  const addMood = () => {
+    if (newMoodName.trim()) {
+      const newMood: Mood = {
+        id: crypto.randomUUID(),
+        name: newMoodName.trim(),
+        color: getRandomPastelColor(),
+      };
+      setMoods([...moods, newMood]);
+      setNewMoodName('');
+      setIsAddingMood(false);
+    }
+  };
+
+  const removeMood = (id: string) => {
+    setMoods(moods.filter((mood) => mood.id !== id));
+  };
+
+  const handleCardClick = (planId: string) => {
+    if (flippedCards.includes(planId) || matchedPairs.includes(planId)) return;
+
+    const newFlipped = [...flippedCards, planId];
+    setFlippedCards(newFlipped);
+
+    if (newFlipped.length === 2) {
+      const [firstId, secondId] = newFlipped;
+      const firstPlan = plans.find((p) => p.id === firstId);
+      const secondPlan = plans.find((p) => p.id === secondId);
+
+      if (firstPlan?.emoji === secondPlan?.emoji) {
+        setMatchedPairs([...matchedPairs, firstId, secondId]);
+        setShowHooray(true);
+        setTimeout(() => {
+          setShowHooray(false);
+          // Flip matched cards back by removing them from matchedPairs
+          setMatchedPairs((prev) => prev.filter((id) => id !== firstId && id !== secondId));
+        }, 2000);
+      }
+
+      const newAttempts = attempts - 1;
+      setAttempts(newAttempts);
+
+      // Reset attempts and flipped cards when attempts reach 0
+      setTimeout(() => {
+        setFlippedCards([]);
+        if (newAttempts === 0) {
+          setAttempts(2);
+          setMatchedPairs([]); // Reset all matches to start fresh
+        }
+      }, 1000);
+    }
+  };
 
   return (
     <div className="relative p-6 rounded-xl min-h-screen text-black -top-10">
       {/* Header Section */}
       <div className="mb-6 space-y-4 -ml-[1.4rem]">
-        {/* Dates + Mood */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex gap-8 text-sm">
-            <p><span className="font-medium">Start:</span> Sep 11 2025</p>
-            <p><span className="font-medium">Due:</span> Oct 11 2025</p>
-          </div>
           <div className="flex flex-wrap gap-2">
-            <button className="bg-yellow-300 text-black px-3 py-1 rounded">Research</button>
-            <button className="bg-green-300 text-black px-3 py-1 rounded">Design</button>
-            <button className="bg-blue-300 text-black px-3 py-1 rounded">Development</button>
-            <button className="bg-gray-400 text-black px-3 py-1 rounded">Other</button>
+            {moods.map((mood) => (
+              <div
+                key={mood.id}
+                className="flex items-center gap-2 px-3 py-1 rounded text-black"
+                style={{ backgroundColor: mood.color }}
+              >
+                {mood.name}
+                <button
+                  onClick={() => removeMood(mood.id)}
+                  className="text-black hover:text-gray-700"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+            {isAddingMood ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newMoodName}
+                  onChange={(e) => setNewMoodName(e.target.value)}
+                  placeholder="Mood name"
+                  className="px-2 py-1 border rounded text-black"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') addMood();
+                    if (e.key === 'Escape') setIsAddingMood(false);
+                  }}
+                />
+                <button
+                  onClick={addMood}
+                  className="bg-blue-500 text-white px-2 py-1 rounded"
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => setIsAddingMood(false)}
+                  className="bg-gray-500 text-white px-2 py-1 rounded"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAddingMood(true)}
+                className="flex items-center gap-1 bg-gray-200 text-black px-3 py-1 rounded hover:bg-gray-300"
+              >
+                <Plus size={16} /> Add Mood
+              </button>
+            )}
           </div>
         </div>
-
-        {/* Total Plans + Add Button */}
         <div className="flex items-center justify-between border-t border-gray-200 pt-4">
           <p className="font-medium">{plans.length} plans</p>
           <button
@@ -127,18 +322,29 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
         </div>
       </div>
 
-      {showPlanWizard && <PlanWizard onComplete={onComplete}/>}
+      {showPlanWizard && <PlanWizard onComplete={onComplete} />}
+
+      {/* Game Info for Vertical Layout */}
+      {layout === 'vertical' && (
+        <div className="mb-4 text-center">
+          <p className="text-sm text-gray-600">
+            Attempts left: {attempts} | Click two cards to match emojis!
+          </p>
+          {showHooray && (
+            <p className="text-lg font-bold text-green-500 animate-pulse">Hooray!</p>
+          )}
+        </div>
+      )}
 
       {/* Plans Section */}
       {plans.length === 0 ? (
         <p className="text-gray-400 text-center">
-          You don’t have any plans yet. Click the plus button to add one!
+          You don't have any plans yet. Click the plus button to add one!
         </p>
       ) : layout === 'horizontal' ? (
-        // Horizontal Layout with Timeline
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={plans.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-            <div className="relative border-l-2 border-gray-300 pl-8">
+            <div className="relative border-l-2 border-zinc-400 pl-8">
               {plans.map((plan) => (
                 <SortableItem key={plan.id} id={plan.id}>
                   <div className="relative mb-2">
@@ -146,8 +352,12 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
                       {iconMap[plan.icon] || iconMap['default']}
                     </span>
                     <div
-                      className="rounded-lg shadow-md p-4 flex gap-4 items-start border border-gray-200"
-                      style={{ backgroundColor: getRandomPastelColor() }}
+                      className="rounded-lg shadow-md p-4 flex gap-4 items-start border border-gray-200/50 backdrop-blur-md"
+                      style={{
+                        backgroundColor: getRandomPastelColor(),
+                        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                      }}
                     >
                       <Image
                         src="/plan.jpg"
@@ -174,22 +384,32 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
           </SortableContext>
         </DndContext>
       ) : (
-        // Vertical Layout (cards stacked)
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-4">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className="rounded-lg shadow-md p-4 border border-gray-200 flex flex-col"
-              style={{ backgroundColor: getRandomPastelColor() }}
+              className="rounded-lg shadow-md p-4 border border-gray-200/50 backdrop-blur-md flex flex-col cursor-pointer w-full max-w-xs mx-auto"
+              style={{
+                backgroundColor: getRandomPastelColor(),
+                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+              }}
+              onClick={() => handleCardClick(plan.id)}
             >
-              <Image
-                src="/plan.jpg"
-                alt="planning placeholder"
-                width={300}
-                height={200}
-                className="rounded-md object-cover mb-4"
-              />
-              <h3 className="text-lg font-semibold">{plan.title}</h3>
+              {flippedCards.includes(plan.id) || matchedPairs.includes(plan.id) ? (
+                <div className="flex justify-center items-center h-40 text-4xl mb-4">
+                  {plan.emoji}
+                </div>
+              ) : (
+                <Image
+                  src="/plan.jpg"
+                  alt="planning placeholder"
+                  width={200}
+                  height={150}
+                  className="rounded-md object-cover mb-4"
+                />
+              )}
+              <h3 className="text-md font-semibold">{plan.title}</h3>
               <p className="text-sm text-gray-700 flex items-center mt-1">
                 <Clock className="w-4 h-4 mr-1" /> {plan.time}
               </p>
