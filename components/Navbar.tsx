@@ -5,20 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { Work_Sans } from 'next/font/google';
 import { tags } from '../constants/Tag';
+import { UserData } from '../types/user';
 
 export const workSans = Work_Sans({
   subsets: ["latin"]
 });
-
-interface UserData {
-  name: string;
-  gender: 'male' | 'female';
-  hobby: string;
-  totalPlansMade: number;
-  plansList: string[];
-  friendList: string[];
-  locations: string[];
-}
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
