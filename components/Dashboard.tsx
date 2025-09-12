@@ -243,7 +243,7 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
       {/* Header Section */}
       <div className="mb-6 space-y-4 -ml-[1.4rem]">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 max-md:mt-4">
             {moods.map((mood) => (
               <div
                 key={mood.id}
