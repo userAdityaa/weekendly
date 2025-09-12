@@ -1,15 +1,42 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { Work_Sans } from 'next/font/google';
+import { tags } from '../constants/Tag';
 
 export const workSans = Work_Sans({
   subsets: ["latin"]
 });
 
+interface UserData {
+  name: string;
+  gender: 'male' | 'female';
+  hobby: string;
+  totalPlansMade: number;
+  plansList: string[];
+  friendList: string[];
+  locations: string[];
+}
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const router = useRouter();
+
+  // Check for userData in localStorage
+  useEffect(() => {
+    const storedData = localStorage.getItem('userData');
+    if (storedData) {
+      setUserData(JSON.parse(storedData));
+    }
+  }, []);
+
+  // Handle navigation to profile page
+  const handleProfileClick = () => {
+    router.push('/profile');
+  };
 
   return (
     <div className="relative z-[100]">
@@ -41,9 +68,26 @@ export default function Navbar() {
           </a>
         </div>
 
-        {/* Desktop Login Text */}
-        <div className="cursor-pointer text-gray-800 font-semibold max-md:hidden">
-          Login
+        {/* Desktop Profile/Login Button */}
+        <div className="cursor-pointer max-md:hidden">
+          {userData ? (
+            <button onClick={handleProfileClick}>
+              <Image
+                src={userData.gender === 'female' ? '/female_user_one.png' : '/male_user_one.png'}
+                alt="Profile"
+                width={40}
+                height={40}
+                className="rounded-full object-cover"
+              />
+            </button>
+          ) : (
+            <button
+              onClick={handleProfileClick}
+              className="text-gray-800 font-semibold bg-[#82ed82ce] p-2 rounded-xl border border-black"
+            >
+              Login
+            </button>
+          )}
         </div>
 
         {/* Mobile Hamburger */}
@@ -55,9 +99,26 @@ export default function Navbar() {
         </button>
       </div>
 
+      <div className="fixed top-[6.5rem] left-1/2 transform -translate-x-1/2 flex space-x-20 z-10">
+        {tags.map((tag, index) => (
+          <div key={index} className="relative flex flex-col items-center hover:animate-swing">
+            {/* Circle at the start of the string */}
+            <div className="w-3 h-3 rounded-full bg-black"></div>
+            {/* String */}
+            <div className="w-[2px] h-8 bg-black"></div>
+            {/* Tag */}
+            <div
+              className={`${tag.color} min-w-[10rem] px-6 py-2 rounded-2xl border border-black font-semibold text-black text-center cursor-pointer`}
+            >
+              {tag.name}
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Mobile Menu Dropdown */}
       {menuOpen && (
-        <div className="fixed top-[6rem] right-4 transform  w-[115px] bg-[#fefefe] border border-black shadow-lg z-20 flex flex-col items-center justify-start space-y-4 py-4 rounded-lg max-md:flex px-4">
+        <div className="fixed top-[6rem] right-4 transform w-[115px] bg-[#fefefe] border border-black shadow-lg z-20 flex flex-col items-center justify-start space-y-4 py-4 rounded-lg max-md:flex px-4">
           <a
             href="#"
             className={`text-gray-800 hover:text-green-700 ${workSans.className} font-semibold text-lg w-full text-center`}
@@ -77,10 +138,10 @@ export default function Navbar() {
             My Plans
           </a>
           <a
-            href="#"
+            href="/profile"
             className={`text-gray-800 hover:text-green-700 ${workSans.className} font-semibold text-lg w-full text-center`}
           >
-            Login
+            {userData ? 'Profile' : 'Login'}
           </a>
         </div>
       )}
