@@ -1,6 +1,6 @@
 'use client';
-import { JSX, useState } from 'react';
-import { Plus, Clock, MapPin, Film, Coffee, Mountain, X } from 'lucide-react';
+import { JSX, useState, useEffect } from 'react';
+import { Plus, Clock, MapPin, Film, Coffee, Mountain, X, Trash2 } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -17,23 +17,16 @@ import { SortableItem } from './SortableItem';
 import Image from 'next/image';
 import PlanWizard from './PlanWizard';
 import { DragEndEvent } from '@dnd-kit/core';
+import { UserData, MainPlan, SubPlan } from '../types/user';
 
 interface Plan {
   id: string;
   title: string;
   location: string;
-  time: string;
+  time: string | null;
   note?: string;
   icon: string;
   emoji: string;
-}
-
-interface PlanFormData {
-  title: string;
-  time: string;
-  note: string;
-  friends: { name: string; gender: 'male' | 'female' }[];
-  location: string;
 }
 
 interface Mood {
@@ -42,69 +35,17 @@ interface Mood {
   color: string;
 }
 
-export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical' }) {
-  const [plans, setPlans] = useState<Plan[]>([
-    {
-      id: '1',
-      title: 'Morning Hike',
-      location: 'Blue Ridge Trail',
-      time: '9:00 AM – 12:00 PM',
-      note: 'Bring water and snacks',
-      icon: 'hike',
-      emoji: '🌄',
-    },
-    {
-      id: '2',
-      title: 'Brunch with Friends',
-      location: 'Sunny Side Café',
-      time: '12:30 PM – 2:00 PM',
-      note: 'Try their avocado toast',
-      icon: 'brunch',
-      emoji: '🥐',
-    },
-    {
-      id: '3',
-      title: 'Evening Movie',
-      location: 'Downtown Cinema',
-      time: '7:00 PM – 9:30 PM',
-      note: 'Book tickets in advance',
-      icon: 'movie',
-      emoji: '🎬',
-    },
-    {
-      id: '4',
-      title: 'Evening Walk',
-      location: 'City Park',
-      time: '6:00 PM – 7:00 PM',
-      note: 'Enjoy the sunset',
-      icon: 'hike',
-      emoji: '🌄',
-    },
-    {
-      id: '5',
-      title: 'Coffee Meetup',
-      location: 'Bean House',
-      time: '3:00 PM – 4:00 PM',
-      note: 'Try the latte',
-      icon: 'brunch',
-      emoji: '🥐',
-    },
-    {
-      id: '6',
-      title: 'Movie Night',
-      location: 'Home Theater',
-      time: '8:00 PM – 10:30 PM',
-      note: 'Popcorn ready',
-      icon: 'movie',
-      emoji: '🎬',
-    },
-  ]);
+interface DashboardProps {
+  layout: 'horizontal' | 'vertical';
+  mainPlanId: string;
+}
 
+export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [moods, setMoods] = useState<Mood[]>([
     { id: '1', name: 'Calm', color: 'rgba(173, 216, 230, 0.3)' },
     { id: '2', name: 'Productive', color: 'rgba(144, 238, 144, 0.3)' },
   ]);
-
   const [isAddingMood, setIsAddingMood] = useState(false);
   const [newMoodName, setNewMoodName] = useState('');
   const [showPlanWizard, setShowPlanWizard] = useState(false);
@@ -112,6 +53,7 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
   const [matchedPairs, setMatchedPairs] = useState<string[]>([]);
   const [attempts, setAttempts] = useState(2);
   const [showHooray, setShowHooray] = useState(false);
+  const [error, setError] = useState<string>('');
 
   const iconMap: Record<string, JSX.Element> = {
     hike: <Mountain className="w-5 h-5" />,
@@ -125,7 +67,61 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
       ? localStorage.getItem('userName') || 'Aditya'
       : 'Aditya';
 
-  const sensors = useSensors(useSensor(PointerSensor));
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
+      },
+    })
+  );
+
+  // Function to randomly select an image source
+  const generateSrc = () => {
+    const images = ['/one.jpg', '/two.jpg', '/three.jpg', '/four.jpg', '/five.jpg'];
+    return images[Math.floor(Math.random() * images.length)];
+  };
+
+  // Load plans from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedMainPlan = localStorage.getItem(`mainPlan_${mainPlanId}`);
+      if (storedMainPlan) {
+        const mainPlan: MainPlan = JSON.parse(storedMainPlan);
+        const subPlans = mainPlan.subPlans || [];
+        const convertedPlans: Plan[] = subPlans.map((subPlan) => ({
+          id: subPlan.id,
+          title: subPlan.activities[0] || 'Untitled',
+          location: subPlan.location || 'TBD',
+          time: subPlan.timings
+            ? `${new Date(subPlan.timings.start).toLocaleTimeString([], {
+                hour: 'numeric',
+                minute: '2-digit',
+              })} – ${new Date(subPlan.timings.end).toLocaleTimeString([], {
+                hour: 'numeric',
+                minute: '2-digit',
+              })}`
+            : null,
+          note: subPlan.notes || undefined,
+          icon: subPlan.activities[0]?.toLowerCase().includes('hike')
+            ? 'hike'
+            : subPlan.activities[0]?.toLowerCase().includes('brunch') ||
+              subPlan.activities[0]?.toLowerCase().includes('coffee')
+            ? 'brunch'
+            : subPlan.activities[0]?.toLowerCase().includes('movie')
+            ? 'movie'
+            : 'default',
+          emoji: ['🌄', '🥐', '🎬'][Math.floor(Math.random() * 3)],
+        }));
+        setPlans(convertedPlans);
+      } else {
+        setError('Main plan not found in storage.');
+      }
+    } catch (e) {
+      console.error('Error loading main plan from localStorage:', e);
+      setError('Failed to load plans. Please try again.');
+    }
+  }, [mainPlanId]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -134,56 +130,90 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
     setPlans((items) => {
       const oldIndex = items.findIndex((item) => item.id === active.id);
       const newIndex = items.findIndex((item) => item.id === over.id);
-      return arrayMove(items, oldIndex, newIndex);
+      const newPlans = arrayMove(items, oldIndex, newIndex);
+
+      try {
+        const storedMainPlan = localStorage.getItem(`mainPlan_${mainPlanId}`);
+        if (storedMainPlan) {
+          const mainPlan: MainPlan = JSON.parse(storedMainPlan);
+          const newSubPlans = arrayMove(mainPlan.subPlans || [], oldIndex, newIndex);
+          const updatedMainPlan: MainPlan = { ...mainPlan, subPlans: newSubPlans };
+          localStorage.setItem(`mainPlan_${mainPlanId}`, JSON.stringify(updatedMainPlan));
+
+          const storedUserData = localStorage.getItem('userData');
+          if (storedUserData) {
+            const userData: UserData = JSON.parse(storedUserData);
+            let updatedMainPlanList = userData.mainPlanList || [];
+            const existingIndex = updatedMainPlanList.findIndex((plan) => plan.id === mainPlanId);
+            if (existingIndex !== -1) {
+              updatedMainPlanList[existingIndex] = updatedMainPlan;
+            } else {
+              updatedMainPlanList.push(updatedMainPlan);
+            }
+            localStorage.setItem(
+              'userData',
+              JSON.stringify({ ...userData, mainPlanList: updatedMainPlanList })
+            );
+          }
+        }
+      } catch (e) {
+        console.error('Error updating subPlans order in localStorage:', e);
+        setError('Failed to update plan order.');
+      }
+
+      return newPlans;
     });
+  };
+
+  const deletePlan = (planId: string, event?: React.MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    setPlans((prevPlans) => {
+      const newPlans = prevPlans.filter((plan) => plan.id !== planId);
+
+      try {
+        const storedMainPlan = localStorage.getItem(`mainPlan_${mainPlanId}`);
+        if (storedMainPlan) {
+          const mainPlan: MainPlan = JSON.parse(storedMainPlan);
+          const newSubPlans = (mainPlan.subPlans || []).filter((subPlan) => subPlan.id !== planId);
+          const updatedMainPlan: MainPlan = { ...mainPlan, subPlans: newSubPlans };
+          localStorage.setItem(`mainPlan_${mainPlanId}`, JSON.stringify(updatedMainPlan));
+
+          const storedUserData = localStorage.getItem('userData');
+          if (storedUserData) {
+            const userData: UserData = JSON.parse(storedUserData);
+            let updatedMainPlanList = userData.mainPlanList || [];
+            const existingIndex = updatedMainPlanList.findIndex((plan) => plan.id === mainPlanId);
+            if (existingIndex !== -1) {
+              updatedMainPlanList[existingIndex] = updatedMainPlan;
+            } else {
+              updatedMainPlanList.push(updatedMainPlan);
+            }
+            localStorage.setItem(
+              'userData',
+              JSON.stringify({ ...userData, mainPlanList: updatedMainPlanList })
+            );
+          }
+        }
+      } catch (e) {
+        console.error('Error deleting subPlan from localStorage:', e);
+        setError('Failed to delete plan.');
+      }
+
+      return newPlans;
+    });
+
+    setFlippedCards((prev) => prev.filter((id) => id !== planId));
+    setMatchedPairs((prev) => prev.filter((id) => id !== planId));
   };
 
   const addPlan = () => {
     setShowPlanWizard(true);
   };
 
-  const formatTime = (time: string): string => {
-    if (!time) return 'TBD';
-    try {
-      const [hours, minutes] = time.split(':').map(Number);
-      const period = hours >= 12 ? 'PM' : 'AM';
-      const formattedHours = hours % 12 || 12;
-      const endHours = (hours + 2) % 24;
-      const endPeriod = endHours >= 12 ? 'PM' : 'AM';
-      const formattedEndHours = endHours % 12 || 12;
-      return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${period} – ${formattedEndHours}:${minutes.toString().padStart(2, '0')} ${endPeriod}`;
-    } catch (error) {
-      return 'TBD';
-    }
-  };
-
-  const onComplete = (formData: PlanFormData) => {
-    const newId = crypto.randomUUID();
-    const activityIcons: Record<string, string> = {
-      Movie: 'movie',
-      Hiking: 'hike',
-      Brunch: 'brunch',
-      'Road Trip': 'default',
-      Coffee: 'brunch',
-      Crafting: 'default',
-      Sports: 'default',
-    };
-    const icon = activityIcons[formData.title] || 'default';
-    const emojiOptions = ['🌄', '🥐', '🎬'];
-    const randomEmoji = emojiOptions[Math.floor(Math.random() * emojiOptions.length)];
-    const friendsNote = formData.friends.length
-      ? `Invited: ${formData.friends.map((f) => f.name).join(', ')}. `
-      : '';
-    const finalNote = friendsNote + (formData.note || '');
-    const newPlan: Plan = {
-      id: newId,
-      title: formData.title,
-      location: formData.location || 'TBD',
-      time: formatTime(formData.time),
-      note: finalNote.trim() || undefined,
-      icon,
-      emoji: randomEmoji,
-    };
+  const onComplete = (newPlan: Plan) => {
     setPlans((prevPlans) => [...prevPlans, newPlan]);
     setShowPlanWizard(false);
   };
@@ -193,7 +223,7 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
       const newMood: Mood = {
         id: crypto.randomUUID(),
         name: newMoodName.trim(),
-        color: 'rgba(173, 216, 230, 0.3)', // fixed light blue
+        color: 'rgba(173, 216, 230, 0.3)',
       };
       setMoods([...moods, newMood]);
       setNewMoodName('');
@@ -240,7 +270,9 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
 
   return (
     <div className="relative p-6 rounded-xl min-h-screen text-black -top-10">
-      {/* Header Section */}
+      {error && (
+        <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
+      )}
       <div className="mb-6 space-y-4 -ml-[1.4rem]">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex flex-wrap gap-2 max-md:mt-4">
@@ -307,9 +339,8 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
         </div>
       </div>
 
-      {showPlanWizard && <PlanWizard onComplete={onComplete} />}
+      {showPlanWizard && <PlanWizard onComplete={onComplete} mainPlanId={mainPlanId} />}
 
-      {/* Game Info for Vertical Layout */}
       {layout === 'vertical' && (
         <div className="mb-4 text-center">
           <p className="text-sm text-gray-600">
@@ -321,7 +352,6 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
         </div>
       )}
 
-      {/* Plans Section */}
       {plans.length === 0 ? (
         <p className="text-gray-400 text-center">
           You don&apos;t have any plans yet. Click the plus button to add one!
@@ -332,16 +362,22 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
             <div className="relative space-y-3">
               {plans.map((plan) => (
                 <SortableItem key={plan.id} id={plan.id}>
-                  <div className="flex items-center gap-3 bg-green-100 rounded-xl p-4 shadow-sm">
-                    {/* Left Icon */}
+                  <div className="relative flex items-center gap-3 bg-green-100 rounded-xl p-4 shadow-sm">
+                    <div data-no-dnd="true">
+                      <button
+                        onClick={(e) => deletePlan(plan.id, e)}
+                        className="absolute top-3 right-4 text-red-500 hover:text-red-700 z-10"
+                        title="Delete plan"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-500 text-white -mt-[2.2rem]">
                       {iconMap[plan.icon] || iconMap['default']}
                     </div>
-
-                    {/* Details */}
                     <div className="flex-1">
                       <h3 className="text-md font-semibold text-gray-900">{plan.title}</h3>
-                      <p className="text-sm text-gray-800">{plan.time}</p>
+                      <p className="text-sm text-gray-800">{plan.time || 'TBD'}</p>
                       <p className="text-sm text-gray-800">{plan.location}</p>
                       {plan.note && (
                         <p className="text-xs text-gray-700 mt-1">{plan.note}</p>
@@ -358,35 +394,40 @@ export default function Dashboard({ layout }: { layout: 'horizontal' | 'vertical
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className="rounded-lg shadow-md p-4 border border-gray-200/50 backdrop-blur-md flex flex-col cursor-pointer w-full max-w-xs mx-auto"
-              style={{
-                backgroundColor: 'rgba(173, 216, 230, 0.3)',
-                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-              }}
+              className="relative rounded-lg p-4 border border-zinc-300 bg-[#8ce88ca9] backdrop-blur-md flex flex-col cursor-pointer w-full max-w-xs mx-auto"
               onClick={() => handleCardClick(plan.id)}
             >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deletePlan(plan.id, e);
+                }}
+                className="absolute bottom-4 right-4 text-red-500 hover:text-red-700 z-10"
+                title="Delete plan"
+              >
+                <Trash2 size={18} />
+              </button>
               {flippedCards.includes(plan.id) || matchedPairs.includes(plan.id) ? (
                 <div className="flex justify-center items-center h-40 text-4xl mb-4">
                   {plan.emoji}
                 </div>
               ) : (
                 <Image
-                  src="/plan.jpg"
+                  src={generateSrc()}
                   alt="planning placeholder"
-                  width={200}
+                  width={300}
                   height={150}
                   className="rounded-md object-cover mb-4"
                 />
               )}
               <h3 className="text-md font-semibold">{plan.title}</h3>
               <p className="text-sm text-gray-700 flex items-center mt-1">
-                <Clock className="w-4 h-4 mr-1" /> {plan.time}
+                <Clock className="w-4 h-4 mr-1" /> {plan.time || 'TBD'}
               </p>
               <p className="text-sm text-gray-700 flex items-center mt-1">
                 <MapPin className="w-4 h-4 mr-1" /> {plan.location}
               </p>
-              {plan.note && <p className="text-sm text-gray-600 italic mt-2">{plan.note}</p>}
+              <p className="text-sm text-gray-600 italic mt-2">{plan.note}</p>
             </div>
           ))}
         </div>

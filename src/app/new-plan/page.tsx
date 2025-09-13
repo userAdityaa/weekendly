@@ -1,13 +1,28 @@
-'use client'
-import { useState } from 'react';
+'use client';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import StepTwo from '../../../components/StepTwo';
+import { v4 as uuidv4 } from 'uuid';
+import { UserData, MainPlan } from '../../../types/user';
 
 export default function NewPlan() {
   const [stage, setStage] = useState(1);
   const [title, setTitle] = useState('');
   const [showTooltip, setShowTooltip] = useState(false);
+  const [error, setError] = useState('');
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [mainPlanId, setMainPlanId] = useState('');
   const router = useRouter();
+
+  // Check for userData in localStorage on component mount
+  useEffect(() => {
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
+      setUserData(JSON.parse(storedUserData));
+    } else {
+      // Redirect to main page if no userData is found
+      router.push('/');
+    }
+  }, [router]);
 
   const generateRandomTitle = () => {
     const funTitles = [
@@ -19,23 +34,66 @@ export default function NewPlan() {
     ];
     const randomTitle = funTitles[Math.floor(Math.random() * funTitles.length)];
     setTitle(randomTitle);
+    setError('');
   };
 
   const handleBack = () => {
     if (stage === 1) {
-      router.push('/plans'); // Navigate to plans page
+      router.push('/plans');
     } else {
-      setStage(stage - 1); // Go back to previous stage
+      setStage(stage - 1);
     }
   };
 
   const handleNext = () => {
-    setStage(stage + 1); // Proceed to next stage
+    if (stage === 1) {
+      if (!title.trim()) {
+        setError('Please enter a title or generate one randomly.');
+        return;
+      }
+
+      if (userData) {
+        const newPlanId = uuidv4();
+        const newMainPlan: MainPlan = {
+          id: newPlanId,
+          title: title.trim(),
+          startDate: new Date(),
+          endDate: new Date(),
+          subPlans: [],
+          isPublic: false,
+        };
+
+        const updatedUserData: UserData = {
+          ...userData,
+          totalPlansMade: userData.totalPlansMade + 1,
+          mainPlanList: [...(userData.mainPlanList || []), newMainPlan],
+        };
+
+        // Update userData in localStorage
+        localStorage.setItem('userData', JSON.stringify(updatedUserData));
+        setUserData(updatedUserData);
+
+        // Create a dedicated localStorage entry for the main plan
+        localStorage.setItem(`mainPlan_${newPlanId}`, JSON.stringify(newMainPlan));
+
+        setMainPlanId(newPlanId);
+        // Route to /plan/{mainPlanId} instead of incrementing stage
+        router.push(`/plan/${newPlanId}`);
+      }
+    } else {
+      // This case is no longer needed since we're routing instead of incrementing stage
+      router.push(`/plan/${mainPlanId}`);
+    }
   };
+
+  // Render nothing while userData is being checked or redirecting
+  if (userData === null) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 relative">
-      {/* Back Button - Vertically centered, extreme left, only for Stage 1 */}
+      {/* Back Button */}
       {stage === 1 && (
         <button
           onClick={handleBack}
@@ -49,7 +107,7 @@ export default function NewPlan() {
         </button>
       )}
 
-      {/* Next Button - Vertically centered, extreme right, rotated 180 degrees, only for Stage 1 */}
+      {/* Next Button */}
       {stage === 1 && (
         <button
           onClick={handleNext}
@@ -71,10 +129,16 @@ export default function NewPlan() {
           <input
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setError('');
+            }}
             placeholder="Enter your plan title"
-            className="border rounded-lg p-3 w-full mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 text-black shadow-sm"
+            className={`border rounded-lg p-3 w-full mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300 text-black shadow-sm ${error ? 'border-red-500' : ''}`}
           />
+          {error && (
+            <p className="text-red-500 text-sm mb-4">{error}</p>
+          )}
           <div className="flex items-center justify-center mb-6">
             <div className="border-t border-gray-300 flex-grow"></div>
             <span className="mx-4 text-gray-500">or</span>
@@ -98,8 +162,6 @@ export default function NewPlan() {
           </div>
         </div>
       )}
-
-      {stage === 2 && <StepTwo />}
     </div>
   );
 }

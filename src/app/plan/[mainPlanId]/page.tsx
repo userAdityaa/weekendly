@@ -1,19 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import Dashboard from './Dashboard';
-import Calendar from './Calendar'; 
+import { useParams, useRouter } from 'next/navigation';
+import Dashboard from '../../../../components/Dashboard';
+import Calendar from '../../../../components/Calendar';
 import { LayoutList, LayoutGrid, Calendar as CalendarIcon } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { UserData, MainPlan } from '../types/user';
+import { UserData, MainPlan } from '../../../../types/user';
+import { toast } from 'react-hot-toast';
 
-interface StepTwoProps {
-  mainPlanId: string;
-}
-
-export default function StepTwo({ mainPlanId }: StepTwoProps) {
+export default function Plan() {
+  const params = useParams(); 
+  const mainPlanId = params.mainPlanId as string;
   const [selectedOption, setSelectedOption] = useState('Planning Dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [layout, setLayout] = useState<'horizontal' | 'vertical'>('horizontal');
@@ -21,17 +20,27 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [error, setError] = useState('');
+  const [isPublicModalOpen, setIsPublicModalOpen] = useState(false);
   const router = useRouter();
 
-  // Load dates from localStorage on component mount
   useEffect(() => {
+    if (!mainPlanId) {
+      setError('Invalid plan ID.');
+      return;
+    }
+
+    const storedPlan = localStorage.getItem(`mainPlan_${mainPlanId}`);
+    if (!storedPlan) {
+      setError('Plan not found.');
+      return;
+    }
+
     const savedStartDate = localStorage.getItem(`mainPlan_${mainPlanId}_startDate`);
     const savedEndDate = localStorage.getItem(`mainPlan_${mainPlanId}_endDate`);
     if (savedStartDate) setStartDate(new Date(savedStartDate));
     if (savedEndDate) setEndDate(new Date(savedEndDate));
   }, [mainPlanId]);
 
-  // Save dates to localStorage when they change
   useEffect(() => {
     if (startDate) {
       localStorage.setItem(`mainPlan_${mainPlanId}_startDate`, startDate.toISOString());
@@ -45,9 +54,8 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
     }
   }, [startDate, endDate, mainPlanId]);
 
-  // Prevent background scrolling when modal is open
   useEffect(() => {
-    if (isDatePickerOpen) {
+    if (isDatePickerOpen || isPublicModalOpen) {
       document.body.classList.add('overflow-hidden');
     } else {
       document.body.classList.remove('overflow-hidden');
@@ -55,7 +63,7 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
     return () => {
       document.body.classList.remove('overflow-hidden');
     };
-  }, [isDatePickerOpen]);
+  }, [isDatePickerOpen, isPublicModalOpen]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -71,25 +79,31 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
 
   const handleCreatePlan = () => {
     if (!startDate || !endDate) {
-      setError('Please select both start and end dates.');
+      toast.error('Please select both start and end dates.', {
+        duration: 3000,
+        position: 'top-right',
+      });
       return;
     }
+    setIsPublicModalOpen(true);
+  };
 
-    // Update main plan in localStorage
+  const handlePublicChoice = (isPublic: boolean) => {
     const storedUserData = localStorage.getItem('userData');
     const storedMainPlan = localStorage.getItem(`mainPlan_${mainPlanId}`);
     if (storedUserData && storedMainPlan) {
       const userData: UserData = JSON.parse(storedUserData);
       const mainPlan: MainPlan = JSON.parse(storedMainPlan);
+      if(startDate == null) return;
+      if(endDate == null) return;
 
-      // Update main plan with start and end dates
       const updatedMainPlan: MainPlan = {
         ...mainPlan,
         startDate,
         endDate,
+        isPublic,
       };
 
-      // Update userData.mainPlanList
       const updatedMainPlanList = userData.mainPlanList.map((plan) =>
         plan.id === mainPlanId ? updatedMainPlan : plan
       );
@@ -98,24 +112,46 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
         mainPlanList: updatedMainPlanList,
       };
 
-      // Save to localStorage
       localStorage.setItem('userData', JSON.stringify(updatedUserData));
       localStorage.setItem(`mainPlan_${mainPlanId}`, JSON.stringify(updatedMainPlan));
 
-      // Clear temporary date storage
       localStorage.removeItem(`mainPlan_${mainPlanId}_startDate`);
       localStorage.removeItem(`mainPlan_${mainPlanId}_endDate`);
 
-      // Navigate to plans page
+      toast.success('Plan created/updated successfully!', {
+        duration: 3000,
+        position: 'top-right',
+      });
+
+      setIsPublicModalOpen(false);
       router.push('/plans');
     } else {
-      setError('Error: Plan data not found.');
+      toast.error('Error: Plan data not found.', {
+        duration: 3000,
+        position: 'top-right',
+      });
+      setIsPublicModalOpen(false);
     }
   };
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <p className="text-red-500 text-lg">{error}</p>
+          <button
+            onClick={() => router.push('/plans')}
+            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Back to Plans
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-gray-100 relative">
-      {/* Sidebar */}
       <div
         className={`${
           isSidebarOpen ? 'w-72' : 'w-20'
@@ -200,7 +236,6 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
                   selectsStart
                   startDate={startDate}
                   endDate={endDate}
-                  maxDate={endDate || new Date()}
                   inline
                   calendarClassName="bg-white border rounded-lg shadow-lg text-black"
                 />
@@ -217,7 +252,6 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
                   startDate={startDate}
                   endDate={endDate}
                   minDate={startDate || undefined}
-                  maxDate={new Date()}
                   inline
                   calendarClassName="bg-white border rounded-lg shadow-lg text-black"
                 />
@@ -229,14 +263,13 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
                 onClick={handleCreatePlan}
                 className="mt-4 w-full bg-[#4dd252] text-black py-2 rounded-lg hover:bg-[#4dd25282] transition"
               >
-                Create Plan
+                Create / Update Plan
               </button>
             </div>
           </>
         )}
       </div>
 
-      {/* Reopen Sidebar Button */}
       {!isSidebarOpen && (
         <button
           onClick={toggleSidebar}
@@ -259,7 +292,6 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
         </button>
       )}
 
-      {/* Main Content */}
       <div className="flex-1 p-8">
         <div className="flex max-md:flex-col max-md:justify-start max-md:items-start max-md:gap-4 items-center justify-between mb-6">
           <h1 className="text-3xl max-md:text-[1.7rem] font-bold text-black">
@@ -297,7 +329,6 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
           )}
         </div>
 
-        {/* Mobile Date Picker Modal */}
         {isDatePickerOpen && (
           <div className="fixed inset-0 backdrop:blur-2xl bg-opacity-50 flex items-center justify-center z-50 md:hidden">
             <div className="bg-white p-6 w-9/12 max-w-md rounded-lg shadow-lg">
@@ -334,7 +365,6 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
                   selectsStart
                   startDate={startDate}
                   endDate={endDate}
-                  maxDate={endDate || new Date()}
                   inline
                   calendarClassName="bg-white border rounded-lg shadow-lg text-black"
                 />
@@ -351,7 +381,6 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
                   startDate={startDate}
                   endDate={endDate}
                   minDate={startDate || undefined}
-                  maxDate={new Date()}
                   inline
                   calendarClassName="bg-white border rounded-lg shadow-lg text-black"
                 />
@@ -369,11 +398,37 @@ export default function StepTwo({ mainPlanId }: StepTwoProps) {
           </div>
         )}
 
-        {/* Render Dashboard or Calendar */}
+        {isPublicModalOpen && (
+          <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
+            <div className="text-center p-6 w-full max-w-md">
+              <h2 className="text-2xl font-semibold text-black mb-4">
+                Make Your Plan Public?
+              </h2>
+              <p className="text-black mb-6">
+                Would you like to make this plan public? If public, other users will be able to view your plan.
+              </p>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => handlePublicChoice(true)}
+                  className="bg-[#4dd252] text-black px-6 py-2 rounded-lg hover:bg-[#4dd25282] transition"
+                >
+                  Make Public
+                </button>
+                <button
+                  onClick={() => handlePublicChoice(false)}
+                  className="bg-gray-200 text-black px-6 py-2 rounded-lg hover:bg-gray-300 transition"
+                >
+                  Keep Private
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {selectedOption === 'Planning Dashboard' ? (
           <Dashboard layout={layout} mainPlanId={mainPlanId} />
         ) : (
-          <Calendar startDate={startDate} endDate={endDate}/>
+          <Calendar startDate={startDate} endDate={endDate} />
         )}
       </div>
     </div>
