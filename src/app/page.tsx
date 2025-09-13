@@ -27,7 +27,7 @@ export default function Home() {
       setIsLoading(true);
       setTimeout(() => {
         setIsLoading(false);
-        router.push('/plans');
+        router.push('/new-plan');
       }, 3000);
     }
   };
