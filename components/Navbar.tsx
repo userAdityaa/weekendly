@@ -7,6 +7,7 @@ import { Work_Sans } from 'next/font/google';
 import { tags } from '../constants/Tag';
 import { UserData } from '../types/user';
 import toast, { Toaster } from 'react-hot-toast';
+import Loader from './Loader';
 
 export const workSans = Work_Sans({
   subsets: ["latin"]
@@ -15,6 +16,7 @@ export const workSans = Work_Sans({
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   // Check for userData in localStorage
@@ -35,7 +37,10 @@ export default function Navbar() {
     if (!userData) {
       toast.error('Set profile through login first to proceed');
     } else {
-      router.push('/plans');
+      setLoading(true);
+      setTimeout(() => {
+        router.push(`/plans`);
+      }, 3000);
     }
   };
 
@@ -129,6 +134,12 @@ export default function Navbar() {
           >
             {userData ? 'Profile' : 'Login'}
           </button>
+        </div>
+      )}
+
+      {loading && (
+        <div className="fixed inset-0 bg-white flex items-center justify-center z-1000">
+          <Loader />
         </div>
       )}
     </div>

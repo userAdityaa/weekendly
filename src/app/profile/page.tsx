@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Loader from '../../../components/Loader';
 
 export default function Profile() {
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [name, setName] = useState('');
   const [hobby, setHobby] = useState('');
   const [hasUserData, setHasUserData] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   // Load data from localStorage
@@ -26,7 +28,10 @@ export default function Profile() {
     const userData = { gender, name, hobby };
     localStorage.setItem('userData', JSON.stringify(userData));
     setHasUserData(true);
-    router.push('/plans');
+    setLoading(true);
+    setTimeout(() => {
+      router.push(`/plans`);
+    }, 3000);
   };
 
   // Logout user
@@ -86,6 +91,12 @@ export default function Profile() {
         >
           Logout
         </button>
+      )}
+
+      {loading && (
+        <div className="fixed inset-0 bg-white flex items-center justify-center z-1000">
+          <Loader />
+        </div>
       )}
     </div>
   );

@@ -4,10 +4,12 @@ import Image from "next/image";
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import Navbar from "../../components/Navbar";
+import Loader from '../../components/Loader';
 
 export default function Home() {
   const [userData, setUserData] = useState(null);
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   // Check for userData in localStorage
   useEffect(() => {
@@ -22,7 +24,10 @@ export default function Home() {
     if (!userData) {
       toast.error('Set profile through login first to proceed');
     } else {
-      router.push('/new-plan');
+      setLoading(true);
+      setTimeout(() => {
+        router.push(`/new-plan`);
+      }, 3000);
     }
   };
 
@@ -94,7 +99,13 @@ export default function Home() {
           quality={70}
           className="object-contain mt-[1rem] max-md:-mt-[1rem] max-md:w-[94vw] max-md:-ml-[2vw] min-2xl:w-[60vh]"
         />
+        {loading && (
+          <div className="fixed inset-0 bg-white flex items-center justify-center z-1000">
+            <Loader />
+          </div>
+        )}
       </div>
+      
     </div>
   );
 }

@@ -13,6 +13,7 @@ export default function NewPlan() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [mainPlanId, setMainPlanId] = useState('');
   const [isSaving, setIsSaving] = useState(false); // New state for saving data
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   // Check for userData in localStorage on component mount
@@ -84,7 +85,10 @@ export default function NewPlan() {
 
           // Navigate after data is set
           setIsSaving(false);
-          router.push(`/plan/${newPlanId}`);
+          setLoading(true);
+          setTimeout(() => {
+            router.push(`/plan/${newPlanId}`);
+          }, 3000);
         } catch (error) {
           console.error('Error saving plan:', error);
           setIsSaving(false);
@@ -188,6 +192,11 @@ export default function NewPlan() {
               <div className="absolute left-1/2 transform -translate-x-1/2 mt-3 w-64 bg-gray-800 text-white text-sm rounded-lg p-3 shadow-lg transition-opacity duration-200">
                 A random fun title will be generated for your planning
                 <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 border-8 border-transparent border-b-gray-800"></div>
+              </div>
+            )}
+            {loading && (
+              <div className="fixed inset-0 bg-white flex items-center justify-center z-1000">
+                <Loader />
               </div>
             )}
           </div>
