@@ -1,8 +1,9 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Post from './Post';
 import { MainPlan, UserData } from '../types/user';
+import Loader from './Loader';
 
 interface PostListProps {
   userData?: UserData; // Optional userData to handle cases where no user data is provided
@@ -10,6 +11,7 @@ interface PostListProps {
 
 export default function PostList({ userData }: PostListProps) {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   // List of available post images
   const postImages = ['/one.jpg', '/two.jpg', '/three.jpg', '/four.jpg', '/five.jpg'];
@@ -201,7 +203,10 @@ export default function PostList({ userData }: PostListProps) {
     }
 
     // Navigate to plan details page
-    router.push(`/plan/${mainPlan.id}`);
+    setLoading(true);
+    setTimeout(() => {
+      router.push(`/plan/${mainPlan.id}`);
+    }, 3000);
   };
 
   return (
@@ -245,6 +250,11 @@ export default function PostList({ userData }: PostListProps) {
           </p>
         </div>
       ))}
+      {loading && (
+        <div className="fixed inset-0 bg-white flex items-center justify-center z-1000">
+          <Loader />
+        </div>
+      )}
     </div>
   );
 }

@@ -150,7 +150,10 @@ export default function Plans() {
   }
 
   const handleViewPlan = (mainPlanId: string) => {
-    router.push(`/plan/${mainPlanId}`);
+    setLoading(true);
+    setTimeout(() => {
+      router.push(`/plan/${mainPlanId}`);
+    }, 3000);
   };
 
   if (loading) {

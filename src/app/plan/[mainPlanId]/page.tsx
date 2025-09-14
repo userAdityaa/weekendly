@@ -30,6 +30,9 @@ export default function Plan() {
   const [showConfetti, setShowConfetti] = useState(false);
   const router = useRouter();
 
+  const defaultPlanIds = ['default1', 'default2', 'default3', 'default4'];
+  const isDefaultPlan = defaultPlanIds.includes(mainPlanId);
+
   // Update layout on window resize
   useEffect(() => {
     const handleResize = () => {
@@ -280,6 +283,7 @@ export default function Plan() {
               <button
                 onClick={handleCreatePlan}
                 className="mt-4 w-full bg-[#4dd252] text-black py-2 rounded-lg hover:bg-[#4dd25282] transition"
+                disabled = {isDefaultPlan}
               >
                 Create / Update Plan
               </button>
