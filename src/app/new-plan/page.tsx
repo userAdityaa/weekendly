@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { UserData, MainPlan } from '../../../types/user';
+import Loader from '../../../components/Loader';
 
 export default function NewPlan() {
   const [stage, setStage] = useState(1);
@@ -11,6 +12,7 @@ export default function NewPlan() {
   const [error, setError] = useState('');
   const [userData, setUserData] = useState<UserData | null>(null);
   const [mainPlanId, setMainPlanId] = useState('');
+  const [isSaving, setIsSaving] = useState(false); // New state for saving data
   const router = useRouter();
 
   // Check for userData in localStorage on component mount
@@ -53,32 +55,41 @@ export default function NewPlan() {
       }
 
       if (userData) {
-        const newPlanId = uuidv4();
-        const newMainPlan: MainPlan = {
-          id: newPlanId,
-          title: title.trim(),
-          startDate: new Date(),
-          endDate: new Date(),
-          subPlans: [],
-          isPublic: false,
-        };
+        setIsSaving(true); // Show loader while saving
+        try {
+          const newPlanId = uuidv4();
+          const newMainPlan: MainPlan = {
+            id: newPlanId,
+            title: title.trim(),
+            startDate: new Date(),
+            endDate: new Date(),
+            subPlans: [],
+            isPublic: false,
+          };
 
-        const updatedUserData: UserData = {
-          ...userData,
-          totalPlansMade: userData.totalPlansMade + 1,
-          mainPlanList: [...(userData.mainPlanList || []), newMainPlan],
-        };
+          const updatedUserData: UserData = {
+            ...userData,
+            totalPlansMade: userData.totalPlansMade + 1,
+            mainPlanList: [...(userData.mainPlanList || []), newMainPlan],
+          };
 
-        // Update userData in localStorage
-        localStorage.setItem('userData', JSON.stringify(updatedUserData));
-        setUserData(updatedUserData);
+          // Update userData in localStorage
+          localStorage.setItem('userData', JSON.stringify(updatedUserData));
+          // Create a dedicated localStorage entry for the main plan
+          localStorage.setItem(`mainPlan_${newPlanId}`, JSON.stringify(newMainPlan));
 
-        // Create a dedicated localStorage entry for the main plan
-        localStorage.setItem(`mainPlan_${newPlanId}`, JSON.stringify(newMainPlan));
+          // Update state after saving
+          setUserData(updatedUserData);
+          setMainPlanId(newPlanId);
 
-        setMainPlanId(newPlanId);
-        // Route to /plan/{mainPlanId} instead of incrementing stage
-        router.push(`/plan/${newPlanId}`);
+          // Navigate after data is set
+          setIsSaving(false);
+          router.push(`/plan/${newPlanId}`);
+        } catch (error) {
+          console.error('Error saving plan:', error);
+          setIsSaving(false);
+          setError('Failed to save plan. Please try again.');
+        }
       }
     } else {
       // This case is no longer needed since we're routing instead of incrementing stage
@@ -89,6 +100,15 @@ export default function NewPlan() {
   // Render nothing while userData is being checked or redirecting
   if (userData === null) {
     return null;
+  }
+
+  // Show loader while saving data
+  if (isSaving) {
+    return (
+      <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
+        <Loader />
+      </div>
+    );
   }
 
   return (

@@ -37,7 +37,7 @@ export default function Plans() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [pastPlans, setPastPlans] = useState<PastPlan[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'map' | 'posts'>('map');
   const router = useRouter();
 
@@ -62,6 +62,7 @@ export default function Plans() {
 
     if (!parsedUserData) {
       router.push('/');
+      setLoading(false);
       return;
     }
 
@@ -117,6 +118,7 @@ export default function Plans() {
     }) ?? [];
 
     setPastPlans(storedPastPlans);
+    setLoading(false);
   }, [router]);
 
   const handleSearchBoxLoad = (searchBox: google.maps.places.SearchBox) => {
@@ -150,6 +152,14 @@ export default function Plans() {
   const handleViewPlan = (mainPlanId: string) => {
     router.push(`/plan/${mainPlanId}`);
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-white flex items-center justify-center z-1000">
+        <Loader />
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full h-full m-0 p-0 bg-[#d6ffd6ee] overflow-hidden max-md:overflow-auto">

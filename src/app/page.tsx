@@ -4,11 +4,9 @@ import Image from "next/image";
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import Navbar from "../../components/Navbar";
-import Loader from '../../components/Loader';
 
 export default function Home() {
   const [userData, setUserData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   // Check for userData in localStorage
@@ -24,11 +22,7 @@ export default function Home() {
     if (!userData) {
       toast.error('Set profile through login first to proceed');
     } else {
-      setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        router.push('/new-plan');
-      }, 3000);
+      router.push('/new-plan');
     }
   };
 
@@ -36,12 +30,6 @@ export default function Home() {
     <div className="relative min-h-screen overflow-hidden">
       {/* Toaster for notifications */}
       <Toaster position="top-center" />
-
-      {isLoading && (
-        <div className="fixed inset-0 bg-white flex items-center justify-center z-1000">
-          <Loader />
-        </div>
-      )}
 
       {/* Background image */}
       <Navbar />

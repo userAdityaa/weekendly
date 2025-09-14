@@ -7,7 +7,6 @@ import { Work_Sans } from 'next/font/google';
 import { tags } from '../constants/Tag';
 import { UserData } from '../types/user';
 import toast, { Toaster } from 'react-hot-toast';
-import Loader from './Loader'; // Assuming you have a Loader component
 
 export const workSans = Work_Sans({
   subsets: ["latin"]
@@ -16,7 +15,6 @@ export const workSans = Work_Sans({
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   // Check for userData in localStorage
@@ -37,11 +35,7 @@ export default function Navbar() {
     if (!userData) {
       toast.error('Set profile through login first to proceed');
     } else {
-      setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        router.push('/plans');
-      }, 3000);
+      router.push('/plans');
     }
   };
 
@@ -49,13 +43,6 @@ export default function Navbar() {
     <div className="relative z-[100]">
       {/* Toaster for notifications */}
       <Toaster position="top-center" />
-
-      {/* Loader */}
-      {isLoading && (
-        <div className="fixed inset-0 bg-white flex items-center justify-center z-1000">
-          <Loader />
-        </div>
-      )}
 
       {/* Navbar */}
       <div className="bg-[#fefefeee] p-4 rounded-xl flex items-center justify-between fixed top-5 left-1/2 w-[98%] transform -translate-x-1/2 z-10 px-8 border border-black max-md:left-[50%] max-md:top-[2%]">
@@ -136,12 +123,12 @@ export default function Navbar() {
           >
             My Plans
           </button>
-          <a
-            href="/profile"
+          <button
+            onClick={handleProfileClick}
             className={`text-gray-800 hover:text-green-700 ${workSans.className} font-semibold text-lg w-full text-center`}
           >
             {userData ? 'Profile' : 'Login'}
-          </a>
+          </button>
         </div>
       )}
     </div>
