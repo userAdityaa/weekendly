@@ -97,7 +97,7 @@ export default function NewPlan() {
       {stage === 1 && (
         <button
           onClick={handleBack}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 hover:bg-gray-200 rounded-full p-2 transition-all duration-200 max-md:top-60 max-md:left-1/2 max-md:-translate-x-1/2"
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 hover:bg-gray-200 rounded-full p-2 transition-all duration-200 max-md:top-[45vw] max-md:left-1/2 max-md:-translate-x-1/2"
         >
           <img
             src="/arrow_prev.png"
@@ -111,7 +111,7 @@ export default function NewPlan() {
       {stage === 1 && (
         <button
           onClick={handleNext}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 hover:bg-gray-200 rounded-full p-2 transition-all duration-200 max-md:top-180 max-md:right-1/2 max-md:translate-x-1/2"
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 hover:bg-gray-200 rounded-full p-2 transition-all duration-200 max-md:top-[175vw] max-md:right-1/2 max-md:translate-x-1/2"
         >
           <img
             src="/arrow_prev.png"
