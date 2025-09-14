@@ -64,23 +64,23 @@ export default function Home() {
             height={550}
             priority
             quality={70}
-            className="object-contain"
+            className="object-contain min-2xl:w-[60vh]"
           />
 
           {/* Text + Button overlay */}
-          <div className="absolute inset-0 top-[16.5rem] left-24 w-[28vw] max-[1182]:w-[29vw] max-[1025]:top-[13rem] max-[1025]:left-20 max-md:w-[90vw] max-md:top-[24vh] max-md:p-4 max-[1181]:top-[15rem] max-[1181]:left-22 max-[391]:left-20">
+          <div className="absolute inset-0 min-2xl:top-[28vh] min-2xl:left-[11vh] top-[16.5rem] left-24 w-[28vw] max-[1182]:w-[29vw] max-[1025]:top-[13rem] max-[1025]:left-20 max-md:w-[90vw] max-md:top-[24vh] max-md:p-4 max-[1181]:top-[15rem] max-[1181]:left-22 max-[391]:left-20">
             <div className="flex flex-col justify-center text-black">
-              <h1 className="max-[431]:text-3xl max-[391]:text-[1.6rem] text-3xl font-semibold  max-[1025]:text-[1.55rem]">Plan a Perfect Weekend</h1>
-              <p className="text-2xl max-[1182]:text-[1.4rem] min-2xl:w-[20vw] max-[1025]:text-[1.15rem] font-medium w-[85%] text-left mt-[1rem] max-[431]:text-2xl max-[391]:text-[1.4rem]">
+              <h1 className="max-[431]:text-3xl max-[391]:text-[1.6rem] text-3xl font-semibold  max-[1025]:text-[1.55rem] min-2xl:text-[3.2vh]">Plan a Perfect Weekend</h1>
+              <p className="text-2xl min-2xl:text-[2.8vh] max-[1182]:text-[1.4rem] min-2xl:w-[38vh] max-[1025]:text-[1.15rem] font-medium w-[85%] text-left mt-[1rem] max-[431]:text-2xl max-[391]:text-[1.4rem]">
                 Playful planning for perfect weekends — craft your own mix of activities, moods, and meals, and turn two days into unforgettable memories.
               </p>
 
               {/* Green button full width */}
               <button
                 onClick={handleStartPlanning}
-                className="relative w-[25vw] min-2xl:w-[20vw] max-xl:w-[20vw] rounded-xl border-2 border-black h-[80px] mt-[1rem] bg-[#82ed82ce] max-md:h-[65px] max-md:w-[80vw] max-md:mt-[0.5rem] max-[391]:w-[80vw] max-[391]:-ml-[0.5rem]"
+                className="relative w-[25vw] min-2xl:w-[38vh] min-2xl:h-[8vh] rounded-xl border-2 border-black h-[80px] mt-[1rem] bg-[#82ed82ce] max-md:h-[65px] max-md:w-[80vw] max-md:mt-[0.5rem] max-[391]:w-[80vw] max-[391]:-ml-[0.5rem]"
               >
-                <span className="absolute inset-0 flex items-center justify-center text-black font-semibold text-xl">
+                <span className="absolute inset-0 min-2xl:text-[2.5vh] flex items-center justify-center text-black font-semibold text-xl">
                   Start Planning
                 </span>
               </button>
@@ -92,7 +92,7 @@ export default function Home() {
           {/* Circle */}
           <div className="w-4 h-4 rounded-full bg-black"></div>
           {/* String */}
-          <div className="w-[2px] h-[10rem] bg-black"></div>
+          <div className="w-[2px] h-[10rem] min-2xl:h-[16vh] bg-black"></div>
           <div className="w-4 h-4 rounded-full bg-black"></div>
         </div>
 
@@ -104,7 +104,7 @@ export default function Home() {
           height={150}
           priority
           quality={70}
-          className="object-contain mt-[1rem] max-md:-mt-[1rem] max-md:w-[94vw] max-md:-ml-[2vw]"
+          className="object-contain mt-[1rem] max-md:-mt-[1rem] max-md:w-[94vw] max-md:-ml-[2vw] min-2xl:w-[60vh]"
         />
       </div>
     </div>

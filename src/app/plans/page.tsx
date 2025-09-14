@@ -179,7 +179,7 @@ export default function Plans() {
       </div>
 
       {/* Main Content */}
-      <div className="ml-16 h-[100vh] p-4 w-[70.5%] max-[1367]:w-[100vw] overflow-hidden max-md:overflow-auto max-md:w-full max-md:ml-0">
+      <div className="ml-16 h-[100vh] p-4 w-[70.5%] max-[1367]:w-[100vw] overflow-hidden max-md:overflow-auto max-md:w-full max-md:ml-0 min-2xl:w-[72vw]">
         {/* Header */}
         <div className="flex max-md:flex-col justify-between items-center mb-4 max-md:items-start">
           <div className='flex w-full justify-between'>
@@ -276,7 +276,7 @@ export default function Plans() {
             </div>
 
             {/* Past Plans + Create New */}
-            <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4 w-[68.4vw] max-[1367]:w-[92.5vw] max-[1181]:w-[91.5vw] max-[1025]:w-[90.5vw] max-md:w-full">
+            <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4 max-[1367]:w-[92.5vw] max-[1181]:w-[91.5vw] max-[1025]:w-[90.5vw] max-md:w-full">
               <div className="col-span-2 max-md:col-span-1 bg-gradient-to-br from-white to-gray-50 rounded-lg p-4 shadow-md overflow-y-auto h-[43vh] max-md:w-full">
                 <div className="flex justify-between items-center mb-4 text-black">
                   <h2 className="text-lg font-semibold">Plans made in the past</h2>
@@ -323,7 +323,7 @@ export default function Plans() {
                 alt='create new card'
                 width={400}
                 height={300}
-                className='h-[35rem] scale-105 rounded-xl'
+                className='h-[35rem] min-2xl:w-[20vw] scale-105 rounded-xl'
                 />
                 <h2 className="text-[1.8rem] font-bold text-white mb-2 mt-[1rem]">Create New Plan</h2>
                 <p className="text-sm text-white opacity-90 text-center mb-4">Start your next adventure with friends!</p>
@@ -352,12 +352,13 @@ export default function Plans() {
           width={400}
           height={400}
         />
-        <div className="absolute h-[4rem] top-0 right-50">
+        <div className="absolute h-[4rem] top-0 right-50 min-2xl:hidden">
           <div className="flex items-center justify-between h-full px-4 font-bold">
-            <p className="text-2xl text-white">My Profile</p>
+            <p className="text-2xl text-white min-2xl:text-3xl">My Profile</p>
           </div>
         </div>
-        <div className="min-h-screen w-[22rem] mx-auto p-4 relative z-10 mt-[3rem] -right-3">
+        <div className="w-[22rem] mx-auto p-4 relative z-10 mt-[3rem] -right-3 min-2xl:hidden">
+          
           <div className="flex flex-col items-center justify-center">
             <Image
               src={userData?.gender === 'female' ? '/female_user_one.png' : '/male_user_one.png'}

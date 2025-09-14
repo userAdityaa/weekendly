@@ -501,7 +501,7 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
                   alt="planning placeholder"
                   width={360}
                   height={150}
-                  className="rounded-md object-cover mb-4"
+                  className="rounded-md object-cover mb-4 min-2xl:w-[50vw]"
                 />
               )}
               <h3 className="text-md font-semibold">{plan.title}</h3>
