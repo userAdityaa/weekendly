@@ -1,6 +1,6 @@
 'use client';
 import { JSX, useState, useEffect } from 'react';
-import { Plus, Clock, MapPin, Film, Coffee, Mountain, X, Trash2 } from 'lucide-react';
+import { Plus, Clock, MapPin, Film, Coffee, Mountain, X, Trash2, Share2 } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -18,6 +18,7 @@ import Image from 'next/image';
 import PlanWizard from './PlanWizard';
 import { DragEndEvent } from '@dnd-kit/core';
 import { UserData, MainPlan, SubPlan } from '../types/user';
+import jsPDF from 'jspdf';
 
 interface Plan {
   id: string;
@@ -82,6 +83,24 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
     return images[Math.floor(Math.random() * images.length)];
   };
 
+  // Function to format time safely
+  const formatTime = (timings: { start: string; end: string } | undefined): string | null => {
+    if (!timings || !timings.start || !timings.end) return null;
+
+    try {
+      const [startHours, startMinutes] = timings.start.split(':').map(Number);
+      const [endHours, endMinutes] = timings.end.split(':').map(Number);
+      const startPeriod = startHours >= 12 ? 'PM' : 'AM';
+      const endPeriod = endHours >= 12 ? 'PM' : 'AM';
+      const formattedStartHours = startHours % 12 || 12;
+      const formattedEndHours = endHours % 12 || 12;
+      return `${formattedStartHours}:${startMinutes.toString().padStart(2, '0')} ${startPeriod} – ${formattedEndHours}:${endMinutes.toString().padStart(2, '0')} ${endPeriod}`;
+    } catch (e) {
+      console.error('Error formatting time:', e);
+      return null;
+    }
+  };
+
   // Load plans from localStorage on mount
   useEffect(() => {
     try {
@@ -93,15 +112,10 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
           id: subPlan.id,
           title: subPlan.activities[0] || 'Untitled',
           location: subPlan.location || 'TBD',
-          time: subPlan.timings
-            ? `${new Date(subPlan.timings.start).toLocaleTimeString([], {
-                hour: 'numeric',
-                minute: '2-digit',
-              })} – ${new Date(subPlan.timings.end).toLocaleTimeString([], {
-                hour: 'numeric',
-                minute: '2-digit',
-              })}`
-            : null,
+          time: formatTime({
+            start: subPlan.timings.start || '',
+            end: subPlan.timings.end || '',
+          }),
           note: subPlan.notes || undefined,
           icon: subPlan.activities[0]?.toLowerCase().includes('hike')
             ? 'hike'
@@ -268,6 +282,31 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
     }
   };
 
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(20);
+    doc.text(`${userName}'s Plans`, 20, 20);
+
+    let yOffset = 40;
+    plans.forEach((plan, index) => {
+      doc.setFontSize(14);
+      doc.text(`Plan ${index + 1}: ${plan.title}`, 20, yOffset);
+      doc.setFontSize(12);
+      doc.text(`Time: ${plan.time || 'TBD'}`, 20, yOffset + 10);
+      doc.text(`Location: ${plan.location}`, 20, yOffset + 20);
+      if (plan.note) {
+        doc.text(`Note: ${plan.note}`, 20, yOffset + 30);
+        yOffset += 40;
+      } else {
+        yOffset += 30;
+      }
+      doc.line(20, yOffset, 190, yOffset); // Separator line
+      yOffset += 10;
+    });
+
+    doc.save(`${userName}_plans.pdf`);
+  };
+
   return (
     <div className="relative p-6 rounded-xl min-h-screen text-black -top-10">
       {error && (
@@ -328,7 +367,7 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
             )}
           </div>
         </div>
-        <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+        <div className="flex items-center justify-between border-t border-zinc-300 pt-4 max-md:w-[110%]">
           <p className="font-medium">{plans.length} plans</p>
           <button
             onClick={addPlan}
@@ -390,11 +429,11 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
           </SortableContext>
         </DndContext>
       ) : (
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-3 gap-4 max-md:w-[120%] max-md:-ml-[2rem]">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className="relative rounded-lg p-4 border border-zinc-300 bg-[#8ce88ca9] backdrop-blur-md flex flex-col cursor-pointer w-full max-w-xs mx-auto"
+              className="relative rounded-lg p-4 border border-zinc-300 bg-[#8ce88ca9] backdrop-blur-md flex flex-col cursor-pointer w-full mx-auto max-md:w-[100%]"
               onClick={() => handleCardClick(plan.id)}
             >
               <button
@@ -415,7 +454,7 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
                 <Image
                   src={generateSrc()}
                   alt="planning placeholder"
-                  width={300}
+                  width={360}
                   height={150}
                   className="rounded-md object-cover mb-4"
                 />
@@ -432,6 +471,15 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
           ))}
         </div>
       )}
+
+      <button
+        onClick={generatePDF}
+        className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg flex items-center gap-2 z-20"
+        title="Share as PDF"
+      >
+        <Share2 size={20} />
+        Share as PDF
+      </button>
     </div>
   );
 }

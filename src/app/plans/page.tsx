@@ -8,6 +8,7 @@ import { UserData, MainPlan, SubPlan } from '../../../types/user';
 import { Map, FileText } from 'lucide-react';
 import { StandaloneSearchBox } from '@react-google-maps/api';
 import PostList from '../../../components/PostList';
+import { User } from 'lucide-react';
 
 const WorldMap = dynamic(() => import('../../../components/WorldMap'), {
   ssr: false,
@@ -142,6 +143,10 @@ export default function Plans() {
     }, 3000);
   };
 
+  const handleUpdateProfile = () => { 
+    router.push('/profile');
+  }
+
   const handleViewPlan = (mainPlanId: string) => {
     router.push(`/plan/${mainPlanId}`);
   };
@@ -200,6 +205,12 @@ export default function Plans() {
             >
               <FileText size={22} className={viewMode === 'posts' ? 'text-white' : 'text-[#094709d0]'} />
             </button>
+            <button
+              className={`p-2 rounded-lg bg-white`}
+              onClick={handleUpdateProfile}
+            >
+              <User size={22} className="text-[#094709d0]" />
+            </button>
           </div>
         </div>
         
@@ -217,6 +228,8 @@ export default function Plans() {
               />
             </StandaloneSearchBox>
           </div>
+
+          <button className='max-md:hidden text-white w-[18rem] p-1 ml-[1rem] rounded-lg font-medium bg-[#41af419f]' onClick={handleUpdateProfile}>Update Profile</button>
         </div>
 
         {viewMode === 'map' ? (
@@ -259,7 +272,7 @@ export default function Plans() {
             </div>
 
             {/* Past Plans + Create New */}
-            <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4 w-[67.5vw] max-[1367]:w-[92.5vw] max-[1181]:w-[91.5vw] max-[1025]:w-[90.5vw] max-md:w-full">
+            <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4 w-[68.4vw] max-[1367]:w-[92.5vw] max-[1181]:w-[91.5vw] max-[1025]:w-[90.5vw] max-md:w-full">
               <div className="col-span-2 max-md:col-span-1 bg-gradient-to-br from-white to-gray-50 rounded-lg p-4 shadow-md overflow-y-auto h-[43vh] max-md:w-full">
                 <div className="flex justify-between items-center mb-4 text-black">
                   <h2 className="text-lg font-semibold">Plans made in the past</h2>
@@ -298,11 +311,18 @@ export default function Plans() {
 
               <div
                 onClick={handleNewPlanClick}
-                className="cursor-pointer rounded-xl text-black h-[43.5vh] w-full p-6 flex flex-col items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="cursor-pointer col-span-1 rounded-xl text-black h-[43vh] p-6 flex flex-col items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 transform bg-[#70cf70a9]"
               >
-                <h2 className="text-2xl font-bold text-white mb-2">Create New Plan</h2>
+                <Image
+                src = "/four.jpg"
+                alt='create new card'
+                width={400}
+                height={300}
+                className='h-[35rem] scale-105 rounded-xl'
+                />
+                <h2 className="text-[1.8rem] font-bold text-white mb-2 mt-[1rem]">Create New Plan</h2>
                 <p className="text-sm text-white opacity-90 text-center mb-4">Start your next adventure with friends!</p>
-                <div className="bg-white text-green-600 font-semibold px-6 py-2 rounded-full hover:bg-green-100 transition-colors duration-200">
+                <div className="bg-white text-green-600 font-semibold px-6 py-2 rounded-xl hover:bg-green-100 transition-colors duration-200">
                   Plan Now
                 </div>
               </div>

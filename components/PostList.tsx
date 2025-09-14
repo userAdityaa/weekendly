@@ -42,7 +42,7 @@ export default function PostList({ userData }: PostListProps) {
             location: 'Maldives',
             locationDetails: { lat: 3.2028, lng: 73.2207 },
             friendList: ['Alice'],
-            timings: { start: new Date('2025-10-15T09:00:00'), end: new Date('2025-10-15T16:00:00') },
+            timings: { start: '2025-10-15T09:00:00', end: '2025-10-15T16:00:00' },
             notes: 'Bring sunscreen',
           },
         ],
@@ -69,7 +69,7 @@ export default function PostList({ userData }: PostListProps) {
             location: 'Bangkok',
             locationDetails: { lat: 13.7563, lng: 100.5018 },
             friendList: ['Bob'],
-            timings: { start: new Date('2025-11-01T10:00:00'), end: new Date('2025-11-01T18:00:00') },
+            timings: { start: '2025-11-01T10:00:00', end: '2025-11-01T18:00:00' },
             notes: 'Wear comfortable shoes',
           },
         ],
@@ -96,7 +96,7 @@ export default function PostList({ userData }: PostListProps) {
             location: 'Himalayas',
             locationDetails: { lat: 27.9881, lng: 86.9250 },
             friendList: ['Charlie'],
-            timings: { start: new Date('2025-12-10T08:00:00'), end: new Date('2025-12-10T17:00:00') },
+            timings: { start: '2025-12-10T08:00:00', end: '2025-12-10T17:00:00' },
             notes: 'Pack warm clothes',
           },
         ],
@@ -123,7 +123,7 @@ export default function PostList({ userData }: PostListProps) {
             location: 'Paris',
             locationDetails: { lat: 48.8566, lng: 2.3522 },
             friendList: ['Alice', 'Bob'],
-            timings: { start: new Date('2026-01-05T09:00:00'), end: new Date('2026-01-05T15:00:00') },
+            timings: { start: '2026-01-05T09:00:00', end: '2026-01-05T15:00:00' },
             notes: 'Bring appetite',
           },
         ],
@@ -184,11 +184,20 @@ export default function PostList({ userData }: PostListProps) {
     if (!localStorage.getItem(planKey)) {
       localStorage.setItem(planKey, JSON.stringify(mainPlan));
     }
+    // Convert startDate to ISO string
     if (!localStorage.getItem(startDateKey)) {
-      localStorage.setItem(startDateKey, mainPlan.startDate.toISOString());
+      const startDate = typeof mainPlan.startDate === 'string'
+        ? new Date(mainPlan.startDate).toISOString()
+        : mainPlan.startDate.toISOString();
+      localStorage.setItem(startDateKey, startDate);
     }
+
+    // Convert endDate to ISO string
     if (!localStorage.getItem(endDateKey)) {
-      localStorage.setItem(endDateKey, mainPlan.endDate.toISOString());
+      const endDate = typeof mainPlan.endDate === 'string'
+        ? new Date(mainPlan.endDate).toISOString()
+        : mainPlan.endDate.toISOString();
+      localStorage.setItem(endDateKey, endDate);
     }
 
     // Navigate to plan details page

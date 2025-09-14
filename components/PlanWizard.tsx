@@ -277,12 +277,8 @@ export default function PlanWizard({ onComplete, mainPlanId }: PlanWizardProps) 
       const newId = crypto.randomUUID();
 
       // Create start and end times only if provided
-      const startTime = formData.startTime
-        ? new Date(`${planDate}T${formData.startTime}:00`)
-        : null;
-      const endTime = formData.endTime
-        ? new Date(`${planDate}T${formData.endTime}:00`)
-        : null;
+      const startTime = formData.startTime;
+      const endTime = formData.endTime;
 
       // Validate endTime is after startTime if both are provided
       if (startTime && endTime && endTime <= startTime) {

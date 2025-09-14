@@ -1,31 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { format, startOfWeek, addDays, startOfMonth, endOfMonth, isSameMonth, isSameDay, addWeeks, subWeeks, addMonths, subMonths, isWithinInterval } from 'date-fns';
-import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { format, startOfWeek, addDays, startOfMonth, endOfMonth, isSameMonth, isSameDay, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns';
+import { ChevronLeft, ChevronRight, Plus, X, Trash2 } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
-interface Event {
+interface Remainder {
   id: string;
   title: string;
   startTime: string;
   endTime: string;
   date: Date;
   backgroundColor: string;
+  subPlan?: string;
+  mainPlanId: string;
 }
 
 interface TimeColumnProps {}
 
 interface DayViewProps {
   date: Date;
-  events: Event[];
+  remainders: Remainder[];
+  onDeleteRemainder: (id: string) => void;
 }
 
 interface WeekViewProps {
   currentDate: Date;
-  events: Event[];
+  remainders: Remainder[];
 }
 
 interface MonthViewProps {
   currentDate: Date;
-  events: Event[];
+  remainders: Remainder[];
 }
 
 const TimeColumn: React.FC<TimeColumnProps> = () => {
@@ -47,7 +51,7 @@ const TimeColumn: React.FC<TimeColumnProps> = () => {
   );
 };
 
-const DayView: React.FC<DayViewProps> = ({ date, events }) => {
+const DayView: React.FC<DayViewProps> = ({ date, remainders, onDeleteRemainder }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -57,7 +61,7 @@ const DayView: React.FC<DayViewProps> = ({ date, events }) => {
     return () => clearInterval(timer);
   }, []);
 
-  const dayEvents = events.filter(event => isSameDay(date, event.date));
+  const dayRemainders = remainders.filter(remainder => isSameDay(date, remainder.date));
 
   const getCurrentTimePosition = () => {
     const hours = currentTime.getHours();
@@ -74,12 +78,12 @@ const DayView: React.FC<DayViewProps> = ({ date, events }) => {
     return hours + (minutes / 60);
   };
 
-  const getEventPosition = (timeStr: string): number => {
+  const getRemainderPosition = (timeStr: string): number => {
     const hours24 = convertTo24Hour(timeStr);
     return hours24 * 64;
   };
 
-  const getEventHeight = (startTime: string, endTime: string): number => {
+  const getRemainderHeight = (startTime: string, endTime: string): number => {
     const startHours = convertTo24Hour(startTime);
     const endHours = convertTo24Hour(endTime);
     return Math.max((endHours - startHours) * 64, 32);
@@ -97,15 +101,15 @@ const DayView: React.FC<DayViewProps> = ({ date, events }) => {
             <div className="absolute -left-2 -top-2 w-4 h-4 rounded-full bg-black" />
           </div>
         )}
-        {dayEvents.map((event) => {
-          const topPosition = getEventPosition(event.startTime);
-          const height = getEventHeight(event.startTime, event.endTime);
-          const isShortEvent = height <= 40;
+        {dayRemainders.map((remainder) => {
+          const topPosition = getRemainderPosition(remainder.startTime);
+          const height = getRemainderHeight(remainder.startTime, remainder.endTime);
+          const isShortRemainder = height <= 40;
 
           return (
             <div
-              key={event.id}
-              className={`absolute left-4 right-4 p-2 rounded-lg ${event.backgroundColor || 'bg-blue-50'}`}
+              key={remainder.id}
+              className={`absolute left-4 w-[95%] right-4 p-2 rounded-lg ${remainder.backgroundColor || 'bg-blue-50'} relative`}
               style={{
                 top: `${topPosition + 25}px`,
                 height: `${height}px`,
@@ -113,18 +117,34 @@ const DayView: React.FC<DayViewProps> = ({ date, events }) => {
                 overflow: 'hidden'
               }}
             >
+              <button
+                onClick={() => onDeleteRemainder(remainder.id)}
+                className="absolute top-4 right-4 text-black hover:text-red-500 z-20"
+              >
+                <Trash2 size={16} />
+              </button>
               <div className="flex flex-col h-full">
-                {isShortEvent ? (
+                {isShortRemainder ? (
                   <div className="text-sm text-black truncate">
-                    {event.title}
+                    {remainder.title}
+                    {remainder.subPlan && (
+                      <span className="text-xs text-gray-600 ml-1">
+                        (for {remainder.subPlan})
+                      </span>
+                    )}
                   </div>
                 ) : (
                   <>
                     <div className="font-medium text-black truncate">
-                      {event.title}
+                      {remainder.title}
+                      {remainder.subPlan && (
+                        <span className="text-xs text-gray-600 ml-1">
+                          (for {remainder.subPlan})
+                        </span>
+                      )}
                     </div>
                     <div className="text-sm text-black">
-                      {event.startTime} - {event.endTime}
+                      {remainder.startTime} - {remainder.endTime}
                     </div>
                   </>
                 )}
@@ -137,7 +157,7 @@ const DayView: React.FC<DayViewProps> = ({ date, events }) => {
   );
 };
 
-const WeekView: React.FC<WeekViewProps> = ({ currentDate, events }) => {
+const WeekView: React.FC<WeekViewProps> = ({ currentDate, remainders }) => {
   const startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
   const timeSlots = Array.from({ length: 24 }, (_, i) => {
@@ -155,16 +175,16 @@ const WeekView: React.FC<WeekViewProps> = ({ currentDate, events }) => {
     return hours + (minutes / 60);
   };
 
-  const getEventStyles = (event: Event) => {
-    const startHour = convertTo24Hour(event.startTime);
-    const endHour = convertTo24Hour(event.endTime);
+  const getRemainderStyles = (remainder: Remainder) => {
+    const startHour = convertTo24Hour(remainder.startTime);
+    const endHour = convertTo24Hour(remainder.endTime);
     const duration = endHour - startHour;
     const height = Math.max(duration * 64, 32);
 
     return {
       top: `${startHour * 64}px`,
       height: `${height}px`,
-      backgroundColor: event.backgroundColor,
+      backgroundColor: remainder.backgroundColor,
     };
   };
 
@@ -204,24 +224,24 @@ const WeekView: React.FC<WeekViewProps> = ({ currentDate, events }) => {
               />
             ))}
 
-            {events
-              .filter(event => isSameDay(day, event.date))
-              .map(event => {
-                const startHour = convertTo24Hour(event.startTime);
-                const endHour = convertTo24Hour(event.endTime);
+            {remainders
+              .filter(remainder => isSameDay(day, remainder.date))
+              .map(remainder => {
+                const startHour = convertTo24Hour(remainder.startTime);
+                const endHour = convertTo24Hour(remainder.endTime);
                 const duration = endHour - startHour;
-                const isShortEvent = duration < 1;
+                const isShortRemainder = duration < 1;
 
                 return (
                   <div
-                    key={event.id}
-                    className={`absolute left-1 right-1 p-2 rounded-lg shadow-sm overflow-hidden ${event.backgroundColor}`}
-                    style={getEventStyles(event)}
+                    key={remainder.id}
+                    className={`absolute left-1 right-1 p-2 rounded-lg shadow-sm overflow-hidden ${remainder.backgroundColor}`}
+                    style={getRemainderStyles(remainder)}
                   >
-                    <div className="text-sm font-medium text-black truncate">{event.title}</div>
-                    {!isShortEvent && (
+                    <div className="text-sm font-medium text-black truncate">{remainder.title}</div>
+                    {!isShortRemainder && (
                       <div className="text-xs text-black truncate">
-                        {event.startTime} - {event.endTime}
+                        {remainder.startTime} - {remainder.endTime}
                       </div>
                     )}
                   </div>
@@ -234,7 +254,7 @@ const WeekView: React.FC<WeekViewProps> = ({ currentDate, events }) => {
   );
 };
 
-const MonthView: React.FC<MonthViewProps> = ({ currentDate, events }) => {
+const MonthView: React.FC<MonthViewProps> = ({ currentDate, remainders }) => {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -253,7 +273,7 @@ const MonthView: React.FC<MonthViewProps> = ({ currentDate, events }) => {
   }
   if (week.length > 0) weeks.push(week);
 
-  const processedEventIds = new Set<string>();
+  const processedRemainderIds = new Set<string>();
 
   return (
     <div className="flex-1 grid grid-cols-7 gap-px bg-gray-200">
@@ -263,11 +283,11 @@ const MonthView: React.FC<MonthViewProps> = ({ currentDate, events }) => {
         </div>
       ))}
       {weeks.flat().map((day, idx) => {
-        processedEventIds.clear();
+        processedRemainderIds.clear();
 
-        const dayEvents = events.filter(event => {
-          if (isSameDay(day, event.date) && !processedEventIds.has(event.id)) {
-            processedEventIds.add(event.id);
+        const dayRemainders = remainders.filter(remainder => {
+          if (isSameDay(day, remainder.date) && !processedRemainderIds.has(remainder.id)) {
+            processedRemainderIds.add(remainder.id);
             return true;
           }
           return false;
@@ -282,22 +302,22 @@ const MonthView: React.FC<MonthViewProps> = ({ currentDate, events }) => {
           >
             <div className="font-medium text-sm text-black">{format(day, 'd')}</div>
             <div className="space-y-1 mt-1">
-              {dayEvents
-                .reduce((unique: Event[], event) => {
+              {dayRemainders
+                .reduce((unique: Remainder[], remainder) => {
                   const hasTimeSlot = unique.some(
-                    existingEvent => 
-                      existingEvent.startTime === event.startTime &&
-                      existingEvent.endTime === event.endTime
+                    existingRemainder => 
+                      existingRemainder.startTime === remainder.startTime &&
+                      existingRemainder.endTime === remainder.endTime
                   );
-                  if (!hasTimeSlot) unique.push(event);
+                  if (!hasTimeSlot) unique.push(remainder);
                   return unique;
                 }, [])
-                .map(event => (
+                .map(remainder => (
                   <div
-                    key={event.id}
-                    className={`${event.backgroundColor || 'bg-blue-50'} p-1 rounded text-xs truncate text-black`}
+                    key={remainder.id}
+                    className={`${remainder.backgroundColor || 'bg-blue-50'} p-1 rounded text-xs truncate text-black`}
                   >
-                    {event.startTime} {event.title}
+                    {remainder.startTime} {remainder.title}
                   </div>
                 ))}
             </div>
@@ -309,42 +329,88 @@ const MonthView: React.FC<MonthViewProps> = ({ currentDate, events }) => {
 };
 
 interface CalendarProps {
-  startDate: Date | null;
-  endDate: Date | null;
+  mainPlanId: string;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ startDate, endDate }) => {
+const Calendar: React.FC<CalendarProps> = ({ mainPlanId }) => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [view, setView] = useState<'Day' | 'Week' | 'Month'>('Day');
-  const [isEventDialogOpen, setIsEventDialogOpen] = useState<boolean>(false);
-  const [events, setEvents] = useState<Event[]>([]);
-  const [newEvent, setNewEvent] = useState({
+  const [isRemainderDialogOpen, setIsRemainderDialogOpen] = useState<boolean>(false);
+  const [remainders, setRemainders] = useState<Remainder[]>([]);
+  const [newRemainder, setNewRemainder] = useState({
     title: '',
     date: currentDate,
     startTime: '12:00 PM',
     endTime: '1:00 PM',
     backgroundColor: 'bg-blue-50',
+    subPlan: '',
+    mainPlanId: mainPlanId,
   });
 
-  // Filter events based on startDate and endDate
-  const filteredEvents = startDate && endDate
-    ? events.filter(event =>
-        isWithinInterval(event.date, { start: startDate, end: endDate })
-      )
-    : events;
+  // Load remainders from localStorage on mount
+  useEffect(() => {
+    const storedRemainders = localStorage.getItem(`remainders_${mainPlanId}`);
+    if (storedRemainders) {
+      const parsedRemainders = JSON.parse(storedRemainders).map((remainder: any) => ({
+        ...remainder,
+        date: new Date(remainder.date),
+      }));
+      setRemainders(parsedRemainders);
+    } else {
+      setRemainders([]);
+    }
+  }, [mainPlanId]);
 
-  const handleSaveEvent = () => {
-    const event: Event = {
+  const handleSaveRemainder = () => {
+    if (!newRemainder.title) {
+      toast.error('Please enter a title for the remainder');
+      return;
+    }
+
+    // Convert times into Date objects for comparison
+    const startDateTime = new Date(newRemainder.date);
+    const [startHour, startMinute] = newRemainder.startTime.split(':').map(Number);
+    startDateTime.setHours(startHour, startMinute);
+
+    const now = new Date();
+    if (startDateTime < now) {
+      toast.error('You cannot set a remainder in the past');
+      return;
+    }
+
+    const remainder: Remainder = {
       id: Math.random().toString(36).substr(2, 9),
-      title: newEvent.title,
-      date: newEvent.date,
-      startTime: newEvent.startTime,
-      endTime: newEvent.endTime,
-      backgroundColor: newEvent.backgroundColor,
+      title: newRemainder.title,
+      date: newRemainder.date,
+      startTime: newRemainder.startTime,
+      endTime: newRemainder.endTime,
+      backgroundColor: newRemainder.backgroundColor,
+      subPlan: newRemainder.subPlan || undefined,
+      mainPlanId: mainPlanId,
     };
-    setEvents([...events, event]);
-    setNewEvent({ title: '', date: currentDate, startTime: '12:00 PM', endTime: '1:00 PM', backgroundColor: 'bg-blue-50' });
-    setIsEventDialogOpen(false);
+
+    const updatedRemainders = [...remainders, remainder];
+    setRemainders(updatedRemainders);
+    localStorage.setItem(`remainders_${mainPlanId}`, JSON.stringify(updatedRemainders));
+
+    setNewRemainder({ 
+      title: '', 
+      date: currentDate, 
+      startTime: '12:00 PM', 
+      endTime: '1:00 PM', 
+      backgroundColor: 'bg-blue-50', 
+      subPlan: '',
+      mainPlanId: mainPlanId 
+    });
+    setIsRemainderDialogOpen(false);
+    toast.success('Remainder added successfully');
+  };
+
+  const handleDeleteRemainder = (id: string) => {
+    const updatedRemainders = remainders.filter(remainder => remainder.id !== id);
+    setRemainders(updatedRemainders);
+    localStorage.setItem(`remainders_${mainPlanId}`, JSON.stringify(updatedRemainders));
+    toast.success('Remainder deleted');
   };
 
   const navigateDate = (direction: 'prev' | 'next') => {
@@ -368,29 +434,32 @@ const Calendar: React.FC<CalendarProps> = ({ startDate, endDate }) => {
   };
 
   return (
-    <div className="h-screen flex flex-col w-full mx-auto p-4">
+    <div className="h-screen flex flex-col w-full mx-auto -mt-[2rem]">
+      <Toaster position="top-right" />
       <div className="flex-none">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-bold text-black">
             {getHeaderText()}
           </h1>
-          <button
-            className="px-4 py-2 bg-white rounded-lg border shadow-sm hover:bg-gray-50 flex items-center gap-2"
-            onClick={() => setIsEventDialogOpen(true)}
-          >
-            <Plus size={20} className='text-black'/>
-            <span className="font-medium text-black">Add Event</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="px-4 py-2 bg-white rounded-lg border shadow-sm hover:bg-gray-50 flex items-center gap-2"
+              onClick={() => setIsRemainderDialogOpen(true)}
+            >
+              <Plus size={20} className='text-black'/>
+              <span className="font-medium text-black">Add Remainder</span>
+            </button>
+          </div>
         </div>
 
-        {/* Event Dialog Modal */}
-        {isEventDialogOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-50">
+        {/* Remainder Dialog Modal */}
+        {isRemainderDialogOpen && (
+          <div className="fixed inset-0 backdrop-blur-md bg-opacity-30 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-black">Add Event</h3>
+                <h3 className="text-xl font-semibold text-black">Add Remainder</h3>
                 <button
-                  onClick={() => setIsEventDialogOpen(false)}
+                  onClick={() => setIsRemainderDialogOpen(false)}
                   className="text-black hover:text-gray-700"
                 >
                   <X className="w-6 h-6 text-black" />
@@ -398,21 +467,31 @@ const Calendar: React.FC<CalendarProps> = ({ startDate, endDate }) => {
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs text-black mb-1">Title</label>
+                  <label className="block text-xs text-black mb-1">Name</label>
                   <input
                     type="text"
-                    value={newEvent.title}
-                    onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                    value={newRemainder.title}
+                    onChange={(e) => setNewRemainder({ ...newRemainder, title: e.target.value })}
                     className="w-full border rounded-lg p-2 text-black"
-                    placeholder="Event title"
+                    placeholder="Remainder name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-black mb-1">Sub Plan (optional)</label>
+                  <input
+                    type="text"
+                    value={newRemainder.subPlan}
+                    onChange={(e) => setNewRemainder({ ...newRemainder, subPlan: e.target.value })}
+                    className="w-full border rounded-lg p-2 text-black"
+                    placeholder="Enter sub plan or leave empty"
                   />
                 </div>
                 <div>
                   <label className="block text-xs text-black mb-1">Date</label>
                   <input
                     type="date"
-                    value={format(newEvent.date, 'yyyy-MM-dd')}
-                    onChange={(e) => setNewEvent({ ...newEvent, date: new Date(e.target.value) })}
+                    value={format(newRemainder.date, 'yyyy-MM-dd')}
+                    onChange={(e) => setNewRemainder({ ...newRemainder, date: new Date(e.target.value) })}
                     className="w-full border rounded-lg p-2 text-black"
                   />
                 </div>
@@ -420,8 +499,8 @@ const Calendar: React.FC<CalendarProps> = ({ startDate, endDate }) => {
                   <label className="block text-xs text-black mb-1">Start Time</label>
                   <input
                     type="time"
-                    value={newEvent.startTime}
-                    onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
+                    value={newRemainder.startTime}
+                    onChange={(e) => setNewRemainder({ ...newRemainder, startTime: e.target.value })}
                     className="w-full border rounded-lg p-2 text-black"
                   />
                 </div>
@@ -429,16 +508,16 @@ const Calendar: React.FC<CalendarProps> = ({ startDate, endDate }) => {
                   <label className="block text-xs text-black mb-1">End Time</label>
                   <input
                     type="time"
-                    value={newEvent.endTime}
-                    onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
+                    value={newRemainder.endTime}
+                    onChange={(e) => setNewRemainder({ ...newRemainder, endTime: e.target.value })}
                     className="w-full border rounded-lg p-2 text-black"
                   />
                 </div>
                 <div>
                   <label className="block text-xs text-black mb-1">Color</label>
                   <select
-                    value={newEvent.backgroundColor}
-                    onChange={(e) => setNewEvent({ ...newEvent, backgroundColor: e.target.value })}
+                    value={newRemainder.backgroundColor}
+                    onChange={(e) => setNewRemainder({ ...newRemainder, backgroundColor: e.target.value })}
                     className="w-full border rounded-lg p-2 text-black"
                   >
                     <option value="bg-blue-50">Blue</option>
@@ -448,10 +527,10 @@ const Calendar: React.FC<CalendarProps> = ({ startDate, endDate }) => {
                   </select>
                 </div>
                 <button
-                  onClick={handleSaveEvent}
+                  onClick={handleSaveRemainder}
                   className="w-full bg-[#4dd25282] text-black py-2 rounded-lg hover:bg-[#4dd252] transition"
                 >
-                  Save Event
+                  Save Remainder
                 </button>
               </div>
             </div>
@@ -492,9 +571,9 @@ const Calendar: React.FC<CalendarProps> = ({ startDate, endDate }) => {
 
       <div className="flex-1 bg-white rounded-lg shadow overflow-hidden flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto">
-          {view === 'Day' && <DayView date={currentDate} events={filteredEvents} />}
-          {view === 'Week' && <WeekView currentDate={currentDate} events={filteredEvents} />}
-          {view === 'Month' && <MonthView currentDate={currentDate} events={filteredEvents} />}
+          {view === 'Day' && <DayView date={currentDate} remainders={remainders} onDeleteRemainder={handleDeleteRemainder} />}
+          {view === 'Week' && <WeekView currentDate={currentDate} remainders={remainders} />}
+          {view === 'Month' && <MonthView currentDate={currentDate} remainders={remainders} />}
         </div>
       </div>
     </div>

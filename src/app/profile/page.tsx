@@ -25,7 +25,18 @@ export default function Profile() {
   const handleSubmit = () => {
     const userData = { gender, name, hobby };
     localStorage.setItem('userData', JSON.stringify(userData));
+    setHasUserData(true);
     router.push('/plans');
+  };
+
+  // Logout user
+  const handleLogout = () => {
+    localStorage.removeItem('userData');
+    setHasUserData(false);
+    setGender('male');
+    setName('');
+    setHobby('');
+    router.push('/');
   };
 
   return (
@@ -62,10 +73,20 @@ export default function Profile() {
       {/* Create/Update Profile Button */}
       <button
         onClick={handleSubmit}
-        className="px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
+        className="px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 mb-4"
       >
         {hasUserData ? 'Update Profile' : 'Create Profile'}
       </button>
+
+      {/* Logout Button (only if logged in) */}
+      {hasUserData && (
+        <button
+          onClick={handleLogout}
+          className="px-6 py-2 bg-red-500 text-white rounded-full hover:bg-red-600"
+        >
+          Logout
+        </button>
+      )}
     </div>
   );
 }

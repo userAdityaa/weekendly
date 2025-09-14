@@ -4,24 +4,41 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import Dashboard from '../../../../components/Dashboard';
 import Calendar from '../../../../components/Calendar';
-import { LayoutList, LayoutGrid, Calendar as CalendarIcon } from 'lucide-react';
+import { LayoutList, LayoutGrid, LayoutDashboard, Calendar as CalendarIcon } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { UserData, MainPlan } from '../../../../types/user';
 import { toast } from 'react-hot-toast';
+import Lottie from 'lottie-react';
+import confettiAnimation from '../../../../public/confetti.json';
 
 export default function Plan() {
-  const params = useParams(); 
+  const params = useParams();
   const mainPlanId = params.mainPlanId as string;
   const [selectedOption, setSelectedOption] = useState('Planning Dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [layout, setLayout] = useState<'horizontal' | 'vertical'>('horizontal');
+  const [layout, setLayout] = useState<'horizontal' | 'vertical'>(
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+      ? 'vertical'
+      : 'horizontal'
+  );
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [error, setError] = useState('');
   const [isPublicModalOpen, setIsPublicModalOpen] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const router = useRouter();
+
+  // Update layout on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setLayout(window.matchMedia('(max-width: 768px)').matches ? 'vertical' : 'horizontal');
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (!mainPlanId) {
@@ -55,7 +72,7 @@ export default function Plan() {
   }, [startDate, endDate, mainPlanId]);
 
   useEffect(() => {
-    if (isDatePickerOpen || isPublicModalOpen) {
+    if (isDatePickerOpen || isPublicModalOpen || showConfetti) {
       document.body.classList.add('overflow-hidden');
     } else {
       document.body.classList.remove('overflow-hidden');
@@ -63,7 +80,7 @@ export default function Plan() {
     return () => {
       document.body.classList.remove('overflow-hidden');
     };
-  }, [isDatePickerOpen, isPublicModalOpen]);
+  }, [isDatePickerOpen, isPublicModalOpen, showConfetti]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -94,8 +111,8 @@ export default function Plan() {
     if (storedUserData && storedMainPlan) {
       const userData: UserData = JSON.parse(storedUserData);
       const mainPlan: MainPlan = JSON.parse(storedMainPlan);
-      if(startDate == null) return;
-      if(endDate == null) return;
+      if (startDate == null) return;
+      if (endDate == null) return;
 
       const updatedMainPlan: MainPlan = {
         ...mainPlan,
@@ -118,13 +135,12 @@ export default function Plan() {
       localStorage.removeItem(`mainPlan_${mainPlanId}_startDate`);
       localStorage.removeItem(`mainPlan_${mainPlanId}_endDate`);
 
-      toast.success('Plan created/updated successfully!', {
-        duration: 3000,
-        position: 'top-right',
-      });
-
       setIsPublicModalOpen(false);
-      router.push('/plans');
+      setShowConfetti(true);
+
+      setTimeout(() => {
+        router.push('/plans');
+      }, 3000);
     } else {
       toast.error('Error: Plan data not found.', {
         duration: 3000,
@@ -203,23 +219,25 @@ export default function Plan() {
           <>
             <ul>
               <li
-                className={`py-2 px-4 mb-2 rounded-lg cursor-pointer transition-colors duration-200 ${
+                className={`py-2 px-4 mb-2 rounded-lg font-medium cursor-pointer transition-colors duration-200 flex items-center gap-2 ${
                   selectedOption === 'Planning Dashboard'
-                    ? 'bg-[#4dd25282] text-black'
-                    : 'bg-gray-100 text-black hover:bg-gray-200'
+                    ? 'bg-[#23b72894] text-black'
+                    : 'bg-[#8be77d86] text-black hover:bg-[#4dd25282]'
                 }`}
                 onClick={() => setSelectedOption('Planning Dashboard')}
               >
+                <LayoutDashboard className="w-5 h-5" />
                 Planning Dashboard
               </li>
               <li
-                className={`py-2 px-4 mb-2 rounded-lg cursor-pointer transition-colors duration-200 ${
+                className={`py-2 px-4 mb-2 rounded-lg font-medium cursor-pointer transition-colors duration-200 flex items-center gap-2 ${
                   selectedOption === 'Calendar View'
-                    ? 'bg-[#4dd25282] text-black'
-                    : 'bg-gray-100 text-black hover:bg-gray-200'
+                    ? 'bg-[#23b72894] text-black'
+                    : 'bg-[#8be77d86] text-black hover:bg-[#4dd25282]'
                 }`}
                 onClick={() => setSelectedOption('Calendar View')}
               >
+                <CalendarIcon className="w-5 h-5" />
                 Calendar View
               </li>
             </ul>
@@ -294,15 +312,15 @@ export default function Plan() {
 
       <div className="flex-1 p-8">
         <div className="flex max-md:flex-col max-md:justify-start max-md:items-start max-md:gap-4 items-center justify-between mb-6">
-          <h1 className="text-3xl max-md:text-[1.7rem] font-bold text-black">
-            {selectedOption}
+          <h1 className="text-3xl max-[391]:text-[1.68em] max-[431]:text-[1.8rem] font-bold text-black max-md:text-[#118b11ee] max-md:uppercase">
+            {selectedOption === "Calendar View" ? "": selectedOption}
           </h1>
 
           {selectedOption === 'Planning Dashboard' && (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 max-md:justify-between max-md:w-full">
               <div
                 onClick={toggleLayout}
-                className={`relative mr-[1.1rem] w-20 h-8 flex items-center rounded-lg p-1 cursor-pointer transition-colors ${
+                className={`relative mr-[1.1rem] w-20 h-8 flex items-center max-md:justify-between rounded-lg p-1 cursor-pointer transition-colors ${
                   layout === 'horizontal' ? 'bg-gray-400' : 'bg-gray-400'
                 }`}
               >
@@ -321,9 +339,9 @@ export default function Plan() {
 
               <button
                 onClick={toggleDatePicker}
-                className="md:hidden w-[33px] h-[33px] bg-gray-200 text-black rounded-lg hover:bg-gray-300 transition flex items-center justify-center border border-zinc-400"
+                className="md:hidden w-[200px] h-[33px] text-black rounded-lg hover:bg-gray-300 transition flex items-center justify-center border border-zinc-300 bg-[#aeae] p-1 ml-[2vh]"
               >
-                <CalendarIcon className="w-5 h-5" />
+                Create / Update Plan
               </button>
             </div>
           )}
@@ -425,10 +443,24 @@ export default function Plan() {
           </div>
         )}
 
+        {showConfetti && (
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-white bg-opacity-90">
+            <div className="text-center p-6 w-full max-w-md">
+              <Lottie animationData={confettiAnimation} loop={false} className="w-full h-64" />
+              <h2 className="text-2xl font-semibold text-black mb-4">
+                Hurraahh!
+              </h2>
+              <p className="text-black mb-6">
+                You have finally made a weekend plan! You can view it in the plans section.
+              </p>
+            </div>
+          </div>
+        )}
+
         {selectedOption === 'Planning Dashboard' ? (
           <Dashboard layout={layout} mainPlanId={mainPlanId} />
         ) : (
-          <Calendar startDate={startDate} endDate={endDate} />
+          <Calendar mainPlanId={mainPlanId} />
         )}
       </div>
     </div>
