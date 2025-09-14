@@ -27,8 +27,8 @@ export interface SubPlan {
   };
   friendList: string[];
   timings: {
-    start: Date | "";
-    end: Date | "";
+    start: string | "";
+    end: string | "";
   };
   notes: string;
 }
