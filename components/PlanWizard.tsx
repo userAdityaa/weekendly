@@ -320,7 +320,7 @@ export default function PlanWizard({ onComplete, mainPlanId }: PlanWizardProps) 
         } else {
           userData = initializeUserData();
         }
-        let updatedMainPlanList = userData.mainPlanList || [];
+        const updatedMainPlanList = userData.mainPlanList || [];
         const existingIndex = updatedMainPlanList.findIndex((plan) => plan.id === mainPlanId);
         if (existingIndex !== -1) {
           updatedMainPlanList[existingIndex] = updatedMainPlan;

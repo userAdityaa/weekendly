@@ -14,7 +14,7 @@ interface Remainder {
   mainPlanId: string;
 }
 
-interface TimeColumnProps {}
+type TimeColumnProps = object;
 
 interface DayViewProps {
   date: Date;
@@ -72,10 +72,13 @@ const DayView: React.FC<DayViewProps> = ({ date, remainders, onDeleteRemainder }
 
   const convertTo24Hour = (timeStr: string): number => {
     const [rawTime, period] = timeStr.trim().split(' ');
-    let [hours, minutes] = rawTime.split(':').map(Number);
+    const [hoursRaw, minutes] = rawTime.split(':').map(Number);
+    let hours = hoursRaw;
+
     if (period === 'PM' && hours !== 12) hours += 12;
     if (period === 'AM' && hours === 12) hours = 0;
-    return hours + (minutes / 60);
+
+    return hours + minutes / 60;
   };
 
   const getRemainderPosition = (timeStr: string): number => {
@@ -169,10 +172,13 @@ const WeekView: React.FC<WeekViewProps> = ({ currentDate, remainders }) => {
 
   const convertTo24Hour = (timeStr: string): number => {
     const [rawTime, period] = timeStr.trim().split(' ');
-    let [hours, minutes] = rawTime.split(':').map(Number);
+    const [hoursRaw, minutes] = rawTime.split(':').map(Number);
+    let hours = hoursRaw;
+
     if (period === 'PM' && hours !== 12) hours += 12;
     if (period === 'AM' && hours === 12) hours = 0;
-    return hours + (minutes / 60);
+
+    return hours + minutes / 60;
   };
 
   const getRemainderStyles = (remainder: Remainder) => {
@@ -351,7 +357,7 @@ const Calendar: React.FC<CalendarProps> = ({ mainPlanId }) => {
   useEffect(() => {
     const storedRemainders = localStorage.getItem(`remainders_${mainPlanId}`);
     if (storedRemainders) {
-      const parsedRemainders = JSON.parse(storedRemainders).map((remainder: any) => ({
+      const parsedRemainders = JSON.parse(storedRemainders).map((remainder: Remainder) => ({
         ...remainder,
         date: new Date(remainder.date),
       }));

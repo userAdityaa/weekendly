@@ -157,7 +157,7 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
           const storedUserData = localStorage.getItem('userData');
           if (storedUserData) {
             const userData: UserData = JSON.parse(storedUserData);
-            let updatedMainPlanList = userData.mainPlanList || [];
+            const updatedMainPlanList = userData.mainPlanList || [];
             const existingIndex = updatedMainPlanList.findIndex((plan) => plan.id === mainPlanId);
             if (existingIndex !== -1) {
               updatedMainPlanList[existingIndex] = updatedMainPlan;
@@ -198,7 +198,7 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
           const storedUserData = localStorage.getItem('userData');
           if (storedUserData) {
             const userData: UserData = JSON.parse(storedUserData);
-            let updatedMainPlanList = userData.mainPlanList || [];
+            const updatedMainPlanList = userData.mainPlanList || [];
             const existingIndex = updatedMainPlanList.findIndex((plan) => plan.id === mainPlanId);
             if (existingIndex !== -1) {
               updatedMainPlanList[existingIndex] = updatedMainPlan;
