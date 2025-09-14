@@ -1,6 +1,6 @@
 'use client';
 import { JSX, useState, useEffect } from 'react';
-import { Plus, Clock, MapPin, Film, Coffee, Mountain, X, Trash2, Share2 } from 'lucide-react';
+import { Plus, Clock, MapPin, Film, Coffee, Mountain, X, Trash2, Share2, Edit2 } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -50,6 +50,7 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
   const [isAddingMood, setIsAddingMood] = useState(false);
   const [newMoodName, setNewMoodName] = useState('');
   const [showPlanWizard, setShowPlanWizard] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [flippedCards, setFlippedCards] = useState<string[]>([]);
   const [matchedPairs, setMatchedPairs] = useState<string[]>([]);
   const [attempts, setAttempts] = useState(2);
@@ -223,13 +224,32 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
     setMatchedPairs((prev) => prev.filter((id) => id !== planId));
   };
 
+  const editPlan = (plan: Plan, event?: React.MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    setEditingPlan(plan);
+    setShowPlanWizard(true);
+  };
+
   const addPlan = () => {
+    setEditingPlan(null);
     setShowPlanWizard(true);
   };
 
   const onComplete = (newPlan: Plan) => {
-    setPlans((prevPlans) => [...prevPlans, newPlan]);
+    if (editingPlan) {
+      // Update existing plan
+      setPlans((prevPlans) =>
+        prevPlans.map((plan) => (plan.id === newPlan.id ? newPlan : plan))
+      );
+    } else {
+      // Add new plan
+      setPlans((prevPlans) => [...prevPlans, newPlan]);
+    }
     setShowPlanWizard(false);
+    setEditingPlan(null);
   };
 
   const addMood = () => {
@@ -378,7 +398,13 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
         </div>
       </div>
 
-      {showPlanWizard && <PlanWizard onComplete={onComplete} mainPlanId={mainPlanId} />}
+      {showPlanWizard && (
+        <PlanWizard
+          onComplete={onComplete}
+          mainPlanId={mainPlanId}
+          editingPlan={editingPlan}
+        />
+      )}
 
       {layout === 'vertical' && (
         <div className="mb-4 text-center">
@@ -402,10 +428,17 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
               {plans.map((plan) => (
                 <SortableItem key={plan.id} id={plan.id}>
                   <div className="relative flex items-center gap-3 bg-green-100 rounded-xl p-4 shadow-sm">
-                    <div data-no-dnd="true">
+                    <div data-no-dnd="true" className="absolute top-3 right-4 flex gap-2">
+                      <button
+                        onClick={(e) => editPlan(plan, e)}
+                        className="text-blue-500 hover:text-blue-700 z-10"
+                        title="Edit plan"
+                      >
+                        <Edit2 size={18} />
+                      </button>
                       <button
                         onClick={(e) => deletePlan(plan.id, e)}
-                        className="absolute top-3 right-4 text-red-500 hover:text-red-700 z-10"
+                        className="text-red-500 hover:text-red-700 z-10"
                         title="Delete plan"
                       >
                         <Trash2 size={18} />
@@ -436,16 +469,28 @@ export default function Dashboard({ layout, mainPlanId }: DashboardProps) {
               className="relative rounded-lg p-4 border border-zinc-300 bg-[#8ce88ca9] backdrop-blur-md flex flex-col cursor-pointer w-full mx-auto max-md:w-[100%]"
               onClick={() => handleCardClick(plan.id)}
             >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deletePlan(plan.id, e);
-                }}
-                className="absolute bottom-4 right-4 text-red-500 hover:text-red-700 z-10"
-                title="Delete plan"
-              >
-                <Trash2 size={18} />
-              </button>
+              <div className="absolute bottom-4 right-4 flex gap-2 z-10">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    editPlan(plan, e);
+                  }}
+                  className="text-blue-500 hover:text-blue-700"
+                  title="Edit plan"
+                >
+                  <Edit2 size={18} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deletePlan(plan.id, e);
+                  }}
+                  className="text-red-500 hover:text-red-700"
+                  title="Delete plan"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
               {flippedCards.includes(plan.id) || matchedPairs.includes(plan.id) ? (
                 <div className="flex justify-center items-center h-40 text-4xl mb-4">
                   {plan.emoji}

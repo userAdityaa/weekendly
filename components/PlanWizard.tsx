@@ -36,9 +36,10 @@ interface Friend {
 interface PlanWizardProps {
   onComplete: (plan: Plan) => void;
   mainPlanId: string;
+  editingPlan?: Plan | null;
 }
 
-export default function PlanWizard({ onComplete, mainPlanId }: PlanWizardProps) {
+export default function PlanWizard({ onComplete, mainPlanId, editingPlan }: PlanWizardProps) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<PlanFormData>({
     title: '',
@@ -62,6 +63,63 @@ export default function PlanWizard({ onComplete, mainPlanId }: PlanWizardProps) 
   const router = useRouter();
   const searchBoxRef = useRef<google.maps.places.SearchBox | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Pre-fill form data if editing an existing plan
+  useEffect(() => {
+    if (editingPlan) {
+      // Parse the time string back to startTime and endTime
+      let startTime = '';
+      let endTime = '';
+      if (editingPlan.time) {
+        try {
+          const [start, end] = editingPlan.time.split(' – ');
+          const [startHours, startMinutesPeriod] = start.split(':');
+          const [startMinutes, startPeriod] = startMinutesPeriod.split(' ');
+          const [endHours, endMinutesPeriod] = end.split(':');
+          const [endMinutes, endPeriod] = endMinutesPeriod.split(' ');
+          
+          const startHourNum = parseInt(startHours) === 12 ? 0 : parseInt(startHours);
+          const endHourNum = parseInt(endHours) === 12 ? 0 : parseInt(endHours);
+          
+          startTime = `${(startPeriod === 'PM' ? startHourNum + 12 : startHourNum).toString().padStart(2, '0')}:${startMinutes}`;
+          endTime = `${(endPeriod === 'PM' ? endHourNum + 12 : endHourNum).toString().padStart(2, '0')}:${endMinutes}`;
+        } catch (e) {
+          console.error('Error parsing time for editing:', e);
+        }
+      }
+
+      // Extract friends from note if present
+      let friends: Friend[] = [];
+      let note = editingPlan.note || '';
+      if (editingPlan.note && editingPlan.note.includes('Invited:')) {
+        const [invitedPart, ...rest] = editingPlan.note.split('. ');
+        const invitedNames = invitedPart.replace('Invited: ', '').split(', ');
+        friends = invitedNames.map((name) => ({
+          name,
+          gender: 'male', // Default gender, as gender isn't stored in Plan
+        }));
+        note = rest.join('. ').trim();
+      }
+
+      setFormData({
+        title: editingPlan.title,
+        startTime,
+        endTime,
+        note,
+        friends,
+        location: editingPlan.location !== 'TBD' ? { name: editingPlan.location, lat: 0, lng: 0 } : null,
+      });
+
+      if (editingPlan.location !== 'TBD') {
+        setSelectedPlace({
+          formatted_address: editingPlan.location,
+          name: editingPlan.location,
+          geometry: { location: new google.maps.LatLng(0, 0) },
+        } as google.maps.places.PlaceResult);
+        if (inputRef.current) inputRef.current.value = editingPlan.location;
+      }
+    }
+  }, [editingPlan]);
 
   // Check for userData in localStorage on component mount
   useEffect(() => {
@@ -274,7 +332,7 @@ export default function PlanWizard({ onComplete, mainPlanId }: PlanWizardProps) 
 
       const mainPlan: MainPlan = JSON.parse(storedMainPlan);
       const planDate = mainPlan.startDate || new Date().toISOString().split('T')[0]; // Fallback to current date
-      const newId = crypto.randomUUID();
+      const newId = editingPlan ? editingPlan.id : crypto.randomUUID();
 
       // Create start and end times only if provided
       const startTime = formData.startTime;
@@ -304,7 +362,14 @@ export default function PlanWizard({ onComplete, mainPlanId }: PlanWizardProps) 
       };
 
       // Update mainPlan in localStorage
-      const updatedSubPlans = [...(mainPlan.subPlans || []), newSubPlan];
+      let updatedSubPlans: SubPlan[];
+      if (editingPlan) {
+        updatedSubPlans = (mainPlan.subPlans || []).map((subPlan) =>
+          subPlan.id === editingPlan.id ? newSubPlan : subPlan
+        );
+      } else {
+        updatedSubPlans = [...(mainPlan.subPlans || []), newSubPlan];
+      }
       const updatedMainPlan: MainPlan = { ...mainPlan, subPlans: updatedSubPlans };
       localStorage.setItem(`mainPlan_${mainPlanId}`, JSON.stringify(updatedMainPlan));
 
@@ -332,7 +397,7 @@ export default function PlanWizard({ onComplete, mainPlanId }: PlanWizardProps) 
           JSON.stringify({
             ...userData,
             mainPlanList: updatedMainPlanList,
-            totalPlansMade: (userData.totalPlansMade || 0) + 1,
+            totalPlansMade: editingPlan ? userData.totalPlansMade : (userData.totalPlansMade || 0) + 1,
           })
         );
       } catch (error) {
@@ -363,8 +428,7 @@ export default function PlanWizard({ onComplete, mainPlanId }: PlanWizardProps) 
         Sports: 'default',
       };
       const icon = activityIcons[formData.title] || 'default';
-      const emojiOptions = ['🌄', '🥐', '🎬'];
-      const randomEmoji = emojiOptions[Math.floor(Math.random() * emojiOptions.length)];
+      const emoji = editingPlan ? editingPlan.emoji : ['🌄', '🥐', '🎬'][Math.floor(Math.random() * 3)];
       const friendsNote = formData.friends.length
         ? `Invited: ${formData.friends.map((f) => f.name).join(', ')}. `
         : '';
@@ -377,7 +441,7 @@ export default function PlanWizard({ onComplete, mainPlanId }: PlanWizardProps) 
         time: formattedTime,
         note: finalNote.trim() || undefined,
         icon,
-        emoji: randomEmoji,
+        emoji,
       };
 
       console.log('PlanWizard Data:', {
@@ -422,7 +486,9 @@ export default function PlanWizard({ onComplete, mainPlanId }: PlanWizardProps) 
             className="flex items-center justify-center h-full p-6"
           >
             <div className="flex flex-col items-center w-full max-w-lg text-center">
-              <h2 className="text-3xl font-bold mb-6">✨ What activity do you want to do?</h2>
+              <h2 className="text-3xl font-bold mb-6">
+                {editingPlan ? '✨ Edit Activity' : '✨ What activity do you want to do?'}
+              </h2>
               <div className="grid grid-cols-2 gap-4 w-full">
                 {trendingActivities.map((act) => (
                   <button
@@ -749,7 +815,7 @@ export default function PlanWizard({ onComplete, mainPlanId }: PlanWizardProps) 
                   onClick={handleFinish}
                   className="bg-green-600 text-white px-8 py-3 rounded-xl shadow-lg hover:scale-105 transition"
                 >
-                  Finish
+                  {editingPlan ? 'Save Changes' : 'Finish'}
                 </button>
               </div>
             </div>

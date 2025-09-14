@@ -246,7 +246,11 @@ export default function Plans() {
               <div className="bg-white rounded-lg p-4 h-[45vh] shadow-md">
                 <div className="flex flex-col justify-start items-start mb-4">
                   <h2 className="text-lg font-semibold text-black">Friendlist</h2>
-                  <span className="text-gray-500 text-sm">Friends you mostly recently made plans with.</span>
+                  <span className="text-gray-500 text-sm">Friends you most recently made plans with.</span>
+
+                  {pastPlans.length === 0 ? <span className='text-zinc-400 mt-[50%]'>You haven&apos;t made any plans yet.</span>
+                  : friends.length === 0 && <span className='text-zinc-400 mt-[50%]'>You haven&apos;t added any friends in the plan yet.</span>}
+                  {}
                 </div>
                 <ul className="space-y-3 overflow-y-auto h-[calc(100%-4rem)]">
                   {friends.map((friend, index) => (
@@ -277,6 +281,7 @@ export default function Plans() {
                 <div className="flex justify-between items-center mb-4 text-black">
                   <h2 className="text-lg font-semibold">Plans made in the past</h2>
                 </div>
+                {pastPlans.length === 0 && <p className='text-zinc-400'>You haven&apos;t made any plans yet.</p>}
                 <ul className="space-y-3">
                   {pastPlans.map((plan, index) => (
                     <li
