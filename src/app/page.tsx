@@ -27,7 +27,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden max-md:h-[120vh]">
       {/* Toaster for notifications */}
       <Toaster position="top-center" />
 
@@ -56,7 +56,7 @@ export default function Home() {
           />
 
           {/* Text + Button overlay */}
-          <div className="absolute inset-0 min-2xl:top-[28vh] min-2xl:left-[11vh] top-[16.5rem] left-24 w-[28vw] max-[1182]:w-[29vw] max-[1025]:top-[12rem] max-[1025]:left-[4.15rem] max-md:w-[90vw] max-md:top-[24vh] max-md:p-4 max-[1181]:top-[15rem] max-[1181]:left-22 max-[391]:left-20">
+          <div className="absolute inset-0 min-2xl:top-[28vh] min-2xl:left-[11vh] top-[16.5rem] left-24 w-[28vw] max-[1182]:w-[29vw] max-[1025]:top-[12rem] max-[1025]:left-[4.15rem] max-md:w-[90vw] max-md:top-[24.5vh] max-md:left-[19.5vw] max-md:p-4 max-[1181]:top-[15rem] max-[1181]:left-22 max-[391]:left-20">
             <div className="flex flex-col justify-center text-black">
               <h1 className="max-[431]:text-3xl max-[391]:text-[1.6rem] text-3xl font-semibold  max-[1025]:text-[1.55rem] min-2xl:text-[3.2vh]">Plan a Perfect Weekend</h1>
               <p className="text-2xl min-2xl:text-[2.8vh] max-[1182]:text-[1.4rem] min-2xl:w-[38vh] max-[1025]:text-[1.15rem] font-medium w-[85%] text-left mt-[1rem] max-[431]:text-2xl max-[391]:text-[1.4rem]">

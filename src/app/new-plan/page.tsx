@@ -117,7 +117,7 @@ export default function NewPlan() {
       {stage === 1 && (
         <button
           onClick={handleBack}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 hover:bg-gray-200 rounded-full p-2 transition-all duration-200 max-md:top-[45vw] max-md:left-1/2 max-md:-translate-x-1/2"
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 hover:bg-gray-200 rounded-full p-2 transition-all duration-200 max-md:top-[10vw] max-md:left-1/2 max-md:-translate-x-1/2"
         >
           <img
             src="/arrow_prev.png"
@@ -131,7 +131,7 @@ export default function NewPlan() {
       {stage === 1 && (
         <button
           onClick={handleNext}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 hover:bg-gray-200 rounded-full p-2 transition-all duration-200 max-md:top-[175vw] max-md:right-1/2 max-md:translate-x-1/2"
+          className="absolute right-4 max-lg:top-1/2 transform -translate-y-1/2 hover:bg-gray-200 rounded-full p-2 transition-all duration-200 max-md:hidden max-md:translate-x-1/2"
         >
           <img
             src="/arrow_prev.png"
@@ -165,6 +165,7 @@ export default function NewPlan() {
             <div className="border-t border-gray-300 flex-grow"></div>
           </div>
           <div className="relative inline-block">
+            <div className='flex flex-col items-center justify-center gap-4'>
             <button
               onClick={generateRandomTitle}
               onMouseEnter={() => setShowTooltip(true)}
@@ -173,6 +174,16 @@ export default function NewPlan() {
             >
               Generate Title
             </button>
+            <button
+              onClick={handleNext}
+            >
+              <img
+                src="/arrow_prev.png"
+                alt="Next"
+                className="w-12 h-12 rotate-180"
+              />
+            </button>
+            </div>
             {showTooltip && (
               <div className="absolute left-1/2 transform -translate-x-1/2 mt-3 w-64 bg-gray-800 text-white text-sm rounded-lg p-3 shadow-lg transition-opacity duration-200">
                 A random fun title will be generated for your planning

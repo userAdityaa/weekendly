@@ -140,10 +140,10 @@ export default function Plans() {
   const handleNewPlanClick = () => {
     setLoading(true);
     setTimeout(() => {
-      setLoading(false);
       router.push('/new-plan');
     }, 3000);
   };
+
 
   const handleUpdateProfile = () => { 
     router.push('/profile');
@@ -162,7 +162,7 @@ export default function Plans() {
   }
 
   return (
-    <div className="flex w-full h-full m-0 p-0 bg-[#d6ffd6ee] overflow-hidden max-md:overflow-auto">
+    <div className="flex w-full h-full m-0 p-0 bg-[#d6ffd6ee] overflow-hidden max-md:h-[100vh]">
       {/* Sidebar */}
       <div className="w-16 h-screen bg-[#8be77d86] fixed left-0 top-0 max-md:hidden">
         <Image
@@ -333,7 +333,7 @@ export default function Plans() {
                 alt='create new card'
                 width={400}
                 height={300}
-                className='h-[35rem] min-2xl:w-[20vw] scale-105 rounded-xl'
+                className='h-[35rem] min-2xl:w-[20vw] scale-105 rounded-xl max-md:min-h-[32vw]'
                 />
                 <h2 className="text-[1.8rem] font-bold text-white mb-2 mt-[1rem]">Create New Plan</h2>
                 <p className="text-sm text-white opacity-90 text-center mb-4">Start your next adventure with friends!</p>
